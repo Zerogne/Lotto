@@ -3,6 +3,8 @@ export type LotteryStatus = "active" | "ended" | "drawing";
 export interface Lottery {
   id: string;
   carName: string;
+  carBrand: string;
+  carModel: string;
   carImage: string;
   ticketPrice: number;
   maxTickets: number;
@@ -35,8 +37,10 @@ export interface Winner {
 
 export const LOTTERIES: Lottery[] = [
   {
-    id: "mglass-001",
+    id: "88117585",
     carName: "Mercedes G-Class",
+    carBrand: "MERCEDES BENZ",
+    carModel: "G-CLASS",
     carImage: "/images/mercedes-g.jpg",
     ticketPrice: 50000,
     maxTickets: 500,
@@ -49,8 +53,10 @@ export const LOTTERIES: Lottery[] = [
     prizeValue: 180000000,
   },
   {
-    id: "bmwx7-002",
+    id: "77234891",
     carName: "BMW X7",
+    carBrand: "BMW",
+    carModel: "X7",
     carImage: "/images/bmw-x7.jpg",
     ticketPrice: 30000,
     maxTickets: 800,
@@ -63,8 +69,10 @@ export const LOTTERIES: Lottery[] = [
     prizeValue: 120000000,
   },
   {
-    id: "lexuslx-003",
+    id: "66398124",
     carName: "Lexus LX",
+    carBrand: "LEXUS",
+    carModel: "LX 600",
     carImage: "/images/lexus-lx.jpg",
     ticketPrice: 20000,
     maxTickets: 1000,
@@ -78,10 +86,9 @@ export const LOTTERIES: Lottery[] = [
   },
 ];
 
-function genCodes(lotteryId: string, count: number, start = 1): string[] {
-  return Array.from({ length: count }, (_, i) =>
-    `${lotteryId.toUpperCase().slice(0, 3)}-${String(start + i).padStart(4, "0")}`
-  );
+function gen6DigitCode(lotteryIdx: number, ticketIdx: number): string {
+  const n = ((lotteryIdx + 1) * 314159 + (ticketIdx + 1) * 271828 + ticketIdx * 37) % 900000 + 100000;
+  return String(n);
 }
 
 const phones = [
@@ -97,10 +104,9 @@ const phones = [
   "9944****",
 ];
 
-function makeTickets(lotteryId: string, lotteryName: string, count: number, baseDate: string): Ticket[] {
-  const codes = genCodes(lotteryId, count);
-  return codes.map((code, i) => ({
-    code,
+function makeTickets(lotteryId: string, lotteryName: string, lotteryIdx: number, count: number, baseDate: string): Ticket[] {
+  return Array.from({ length: count }, (_, i) => ({
+    code: gen6DigitCode(lotteryIdx, i),
     phone: phones[i % phones.length],
     lotteryId,
     lotteryName,
@@ -109,19 +115,19 @@ function makeTickets(lotteryId: string, lotteryName: string, count: number, base
 }
 
 export const TICKETS: Ticket[] = [
-  ...makeTickets("mglass-001", "Mercedes G-Class", 12, "2026-04-20"),
-  ...makeTickets("bmwx7-002", "BMW X7", 12, "2026-04-22"),
-  ...makeTickets("lexuslx-003", "Lexus LX", 10, "2026-02-28"),
+  ...makeTickets("88117585", "Mercedes G-Class", 0, 30, "2026-04-20"),
+  ...makeTickets("77234891", "BMW X7", 1, 30, "2026-04-22"),
+  ...makeTickets("66398124", "Lexus LX", 2, 30, "2026-02-28"),
 ];
 
 export const WINNERS: Winner[] = [
   {
     id: "w-001",
-    lotteryId: "lexuslx-003",
+    lotteryId: "66398124",
     carName: "Lexus LX",
     carImage: "/images/lexus-lx.jpg",
     winnerPhone: "9911****",
-    ticketCode: "LEX-0042",
+    ticketCode: "387028",
     drawDate: "2026-03-02",
     prizeValue: 150000000,
   },
@@ -149,4 +155,8 @@ export function formatDate(dateStr: string): string {
     month: "long",
     day: "numeric",
   });
+}
+
+export function gen6DigitRandom(): string {
+  return String(Math.floor(100000 + Math.random() * 900000));
 }
