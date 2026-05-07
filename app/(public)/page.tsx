@@ -1,31 +1,21 @@
 import Link from "next/link";
 import { LOTTERIES, formatMNT } from "@/lib/mock-data";
 import CountdownTimer from "@/components/public/CountdownTimer";
+import HomeLotteryCard from "@/components/public/HomeLotteryCard";
+import TicketCheckSection from "@/components/public/TicketCheckSection";
+import DarkHeroShell from "@/components/public/DarkHeroShell";
 
 export default function LandingPage() {
   const activeLotteries = LOTTERIES.filter((l) => l.status === "active");
   const featured = activeLotteries[0];
+  const pastOrOther = LOTTERIES.filter((l) => l.status !== "active");
 
   return (
     <div className="min-h-screen bg-white">
       {featured && (
         <>
           {/* ── Hero: dark bg + bold car name ── */}
-          <div className="relative overflow-hidden bg-gray-900">
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(135deg,#1a1a2e 0%,#16213e 40%,#0f3460 100%)",
-              }}
-            />
-            <div
-              className="absolute inset-0 opacity-10"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(255,255,255,0.05) 20px,rgba(255,255,255,0.05) 40px)",
-              }}
-            />
+          <DarkHeroShell>
             {/* Car silhouette placeholder */}
             <div className="absolute inset-0 flex items-center justify-center opacity-10 select-none pointer-events-none">
               <span className="text-[160px] leading-none">🚗</span>
@@ -56,9 +46,7 @@ export default function LandingPage() {
                 <CountdownTimer endDate={featured.endDate} />
               </div>
             </div>
-          </div>
-
-          {/* ── Info strip ── */}
+          </DarkHeroShell>
           <div className="bg-amber-50 border-b border-amber-100 px-4 py-3">
             <div className="max-w-lg mx-auto flex items-center justify-between gap-4">
               <div className="text-center">
@@ -89,53 +77,43 @@ export default function LandingPage() {
             />
           </div>
 
-          {/* ── Description ── */}
-          <div className="max-w-lg mx-auto px-4 py-5 pb-32 lg:pb-10">
-            <p className="text-sm text-gray-600 leading-relaxed mb-6">{featured.description}</p>
 
-            {/* Desktop CTA (inline) */}
-            <div className="hidden lg:block">
+          {/* ── Ticket check ── */}
+          <div className="border-t border-gray-100 bg-gray-50">
+            <TicketCheckSection
+              lotteries={LOTTERIES}
+              defaultLotteryId={featured.id}
+              showHero={false}
+            />
+          </div>
+
+          {/* ── Other active lotteries ── */}
+          {activeLotteries.length > 1 && (
+            <div className="border-t border-gray-200">
+              <div className="max-w-lg mx-auto px-4 py-6 pb-32 lg:pb-8">
+                <label className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.15em] text-gray-700">
+                  Бусад сугалаанууд
+                </label>
+                <div className="space-y-3">
+                  {activeLotteries.slice(1).map((lottery) => (
+                    <HomeLotteryCard key={lottery.id} lottery={lottery} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Desktop CTA — only shown when no other-lotteries section */}
+          {activeLotteries.length <= 1 && (
+            <div className="hidden lg:block max-w-lg mx-auto px-4 py-6 pb-10">
               <Link
-                href={`/lottery/${featured.id}`}
+                href={`/lottery/${featured.id}/purchase`}
                 className="inline-block bg-amber-500 hover:bg-amber-600 text-white font-black text-base uppercase tracking-widest px-10 py-4 rounded-xl transition-colors shadow-lg"
               >
                 Сугалаа авах
               </Link>
             </div>
-
-            {/* Other active lotteries */}
-            {activeLotteries.length > 1 && (
-              <div className="mt-8">
-                <h2 className="text-xs font-black uppercase tracking-widest text-gray-500 mb-4">
-                  Бусад сугалаанууд
-                </h2>
-                <div className="space-y-3">
-                  {activeLotteries.slice(1).map((lottery) => (
-                    <Link
-                      key={lottery.id}
-                      href={`/lottery/${lottery.id}`}
-                      className="flex items-center gap-4 bg-gray-50 hover:bg-amber-50 border border-gray-100 hover:border-amber-200 rounded-xl p-3 transition-colors"
-                    >
-                      <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-2xl shrink-0">
-                        🚗
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-black text-gray-900 text-sm uppercase tracking-wide truncate">
-                          {lottery.carBrand} {lottery.carModel}
-                        </p>
-                        <p className="text-amber-500 font-bold text-sm">{formatMNT(lottery.prizeValue)}</p>
-                        <p className="text-xs text-gray-500">
-                          {lottery.ticketsSold}/{lottery.maxTickets} тасалбар ·{" "}
-                          {formatMNT(lottery.ticketPrice)}/ш
-                        </p>
-                      </div>
-                      <div className="text-amber-500 shrink-0">→</div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </>
       )}
 
@@ -143,10 +121,38 @@ export default function LandingPage() {
       {featured && (
         <div className="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-gray-200 px-4 py-3 lg:hidden">
           <Link
-            href={`/lottery/${featured.id}`}
+            href={`/lottery/${featured.id}/purchase`}
             className="block w-full bg-amber-500 hover:bg-amber-600 text-white font-black text-base uppercase tracking-widest py-4 rounded-xl text-center transition-colors shadow-lg"
           >
             Сугалаа авах
+          </Link>
+        </div>
+      )}
+
+      {!featured && (
+        <div className="max-w-lg mx-auto px-4 py-16 text-center">
+          <p className="text-amber-600 font-black text-sm uppercase tracking-widest mb-2">
+            Идэвхтэй сугалаа байхгүй
+          </p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">Тун удахгүй шинэ сугалаа нэмэгдэнэ</h1>
+          <p className="text-sm text-gray-600 mb-8">
+            Одоогоор идэвхтэй автомашины сугалаа алга. Дууссан сугалаанууд болон хожигчдыг доороос үзнэ үү.
+          </p>
+          {pastOrOther.length > 0 && (
+            <div className="text-left space-y-3 mb-8">
+              <h2 className="text-xs font-black uppercase tracking-widest text-gray-500 text-center mb-4">
+                Сүүлийн сугалаанууд
+              </h2>
+              {pastOrOther.map((lottery) => (
+                <HomeLotteryCard key={lottery.id} lottery={lottery} />
+              ))}
+            </div>
+          )}
+          <Link
+            href="/winners"
+            className="inline-block bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm px-8 py-3 rounded-xl transition-colors"
+          >
+            Хожигчдын жагсаалт
           </Link>
         </div>
       )}

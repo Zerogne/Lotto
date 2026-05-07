@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { getTicketsByLottery } from "@/lib/mock-data";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Trophy, Shuffle } from "lucide-react";
 
@@ -46,6 +46,9 @@ export default function DrawButton({ lotteryId, lotteryName }: Props) {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-center">Сугалаа шалгаруулах</DialogTitle>
+            <DialogDescription className="sr-only">
+              {lotteryName} сугалааны хожигчийг шалгаруулах
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-2">
             <p className="text-sm text-gray-600 text-center">

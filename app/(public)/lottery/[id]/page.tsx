@@ -1,9 +1,13 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getLotteryById } from "@/lib/mock-data";
-import TicketPurchaseClient from "./TicketPurchaseClient";
 
-export default function LotteryPage({ params }: { params: { id: string } }) {
-  const lottery = getLotteryById(params.id);
+export default async function LotteryDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const lottery = getLotteryById(id);
   if (!lottery) notFound();
-  return <TicketPurchaseClient lottery={lottery} />;
+  redirect(`/lottery/${id}/purchase`);
 }

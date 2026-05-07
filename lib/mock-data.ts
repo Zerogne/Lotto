@@ -41,7 +41,7 @@ export const LOTTERIES: Lottery[] = [
     carName: "Mercedes G-Class",
     carBrand: "MERCEDES BENZ",
     carModel: "G-CLASS",
-    carImage: "/images/mercedes-g.jpg",
+    carImage: "/images/car-placeholder.svg",
     ticketPrice: 50000,
     maxTickets: 500,
     ticketsSold: 347,
@@ -57,7 +57,7 @@ export const LOTTERIES: Lottery[] = [
     carName: "BMW X7",
     carBrand: "BMW",
     carModel: "X7",
-    carImage: "/images/bmw-x7.jpg",
+    carImage: "/images/car-placeholder.svg",
     ticketPrice: 30000,
     maxTickets: 800,
     ticketsSold: 512,
@@ -73,7 +73,7 @@ export const LOTTERIES: Lottery[] = [
     carName: "Lexus LX",
     carBrand: "LEXUS",
     carModel: "LX 600",
-    carImage: "/images/lexus-lx.jpg",
+    carImage: "/images/car-placeholder.svg",
     ticketPrice: 20000,
     maxTickets: 1000,
     ticketsSold: 1000,
@@ -125,7 +125,7 @@ export const WINNERS: Winner[] = [
     id: "w-001",
     lotteryId: "66398124",
     carName: "Lexus LX",
-    carImage: "/images/lexus-lx.jpg",
+    carImage: "/images/car-placeholder.svg",
     winnerPhone: "9911****",
     ticketCode: "387028",
     drawDate: "2026-03-02",
@@ -139,6 +139,26 @@ export function getLotteryById(id: string): Lottery | undefined {
 
 export function getTicketsByLottery(lotteryId: string): Ticket[] {
   return TICKETS.filter((t) => t.lotteryId === lotteryId);
+}
+
+export function findTicketByLotteryAndCode(lotteryId: string, codeRaw: string): Ticket | undefined {
+  const code = codeRaw.trim();
+  if (!/^\d{6}$/.test(code)) return undefined;
+  return TICKETS.find((t) => t.lotteryId === lotteryId && t.code === code);
+}
+
+/** 8 оронтой дугаарыг дэмо өгөгдлийн `9911****` гэсэн масктай мөрийг эхний 4 оронгоор харьцуулна */
+export function findTicketsForPhoneDigits(
+  eightDigits: string,
+  options?: { lotteryId?: string }
+): Ticket[] {
+  if (!/^\d{8}$/.test(eightDigits)) return [];
+  let list = TICKETS.filter((t) => {
+    const m = t.phone.match(/^(\d{4})/);
+    return m ? eightDigits.startsWith(m[1]) : false;
+  });
+  if (options?.lotteryId) list = list.filter((t) => t.lotteryId === options.lotteryId);
+  return list;
 }
 
 export function getActiveLotteries(): Lottery[] {

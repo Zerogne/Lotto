@@ -25,9 +25,10 @@ function calcTimeLeft(endDate: string): TimeLeft {
 }
 
 export default function CountdownTimer({ endDate }: Props) {
-  const [time, setTime] = useState<TimeLeft>(calcTimeLeft(endDate));
+  const [time, setTime] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
+    setTime(calcTimeLeft(endDate));
     const id = setInterval(() => setTime(calcTimeLeft(endDate)), 1000);
     return () => clearInterval(id);
   }, [endDate]);
