@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Lottery, formatMNT, gen6DigitRandom } from "@/lib/mock-data";
+import { Lottery, formatMNT } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { QrCode, CheckCircle2, ChevronLeft } from "lucide-react";
 import DarkHeroShell from "@/components/public/DarkHeroShell";
@@ -19,7 +19,8 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
   const [qpayOpen, setQpayOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
   const [newCodes, setNewCodes] = useState<string[]>([]);
-  const [errors, setErrors] = useState<{ phone?: string; lottery?: string; quantity?: string }>({});
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ phone?: string; lottery?: string; quantity?: string; api?: string }>({});
 
   const selectedLottery = useMemo(
     () => lotteries.find((l) => l.id === selectedLotteryId) ?? lotteries[0],
@@ -38,18 +39,34 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
     setQpayOpen(true);
   }
 
-  function handlePaid() {
-    const generated = Array.from({ length: qtyNum }, () => gen6DigitRandom());
-    setNewCodes(generated);
-    setQpayOpen(false);
-    setSuccessOpen(true);
+  async function handlePaid() {
+    setLoading(true);
+    setErrors({});
+    const res = await fetch("/api/tickets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        phone,
+        lotteryId: selectedLottery?.id,
+        quantity: qtyNum,
+      }),
+    });
+    setLoading(false);
+    if (res.ok) {
+      const data = await res.json();
+      setNewCodes((data.tickets ?? []).map((t: { code: string }) => t.code));
+      setQpayOpen(false);
+      setSuccessOpen(true);
+    } else {
+      const data = await res.json();
+      setErrors({ api: data.error ?? "Алдаа гарлаа" });
+    }
   }
 
   const phoneConfirmed = phone.length === 8;
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* ── Hero header ── */}
       <DarkHeroShell className="shrink-0">
         <div className="relative z-10 px-4 py-8 max-w-lg mx-auto">
           <Link
@@ -70,10 +87,7 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
         </div>
       </DarkHeroShell>
 
-      {/* ── Body ── */}
       <div className="flex-1 px-4 pt-4 pb-32 lg:pb-10 max-w-lg mx-auto w-full">
-
-        {/* Info banner */}
         <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-center">
           <p className="text-sm text-gray-800 italic leading-relaxed">
             {phoneConfirmed ? (
@@ -89,7 +103,6 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
           </p>
         </div>
 
-        {/* Phone input */}
         <div className="mb-4">
           <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-gray-700 mb-1.5">
             Утасны дугаар:
@@ -106,17 +119,13 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
                 : "border-gray-200 focus:border-amber-400"
             }`}
           />
-          {errors.phone && (
-            <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-          )}
+          {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
         </div>
 
-        {/* Lottery select */}
         <div className="mb-4">
           <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-gray-700 mb-1.5">
             Машины сугалаа
           </label>
-
           <select
             value={selectedLotteryId}
             onChange={(e) => {
@@ -127,14 +136,13 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
           >
             {lotteries.map((l) => (
               <option key={l.id} value={l.id}>
-                {l.carBrand} {l.carModel} · {l.id}
+                {l.carBrand} {l.carModel} · {formatMNT(l.ticketPrice)}
               </option>
             ))}
           </select>
           {errors.lottery && <p className="text-red-500 text-xs mt-1">{errors.lottery}</p>}
         </div>
 
-        {/* Quantity input */}
         <div className="mb-6">
           <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-gray-700 mb-1.5">
             Хэдэн тасалбар авах вэ
@@ -162,7 +170,6 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
         </div>
       </div>
 
-      {/* ── Fixed bottom CTA ── */}
       <div className="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-gray-200 px-4 py-3 lg:static lg:bg-transparent lg:border-0 lg:backdrop-blur-none lg:max-w-lg lg:mx-auto lg:w-full lg:pb-8">
         <button
           onClick={handleOpenPay}
@@ -172,16 +179,14 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
         </button>
       </div>
 
-      {/* ── QPay Modal ── */}
+      {/* QPay Modal */}
       <Dialog open={qpayOpen} onOpenChange={setQpayOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-center text-lg font-black uppercase tracking-wide">
               QPay Төлбөр
             </DialogTitle>
-            <DialogDescription className="sr-only">
-              QPay QR кодоор төлбөр хийх
-            </DialogDescription>
+            <DialogDescription className="sr-only">QPay QR кодоор төлбөр хийх</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-3">
             <div className="w-48 h-48 bg-gray-100 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-300">
@@ -199,26 +204,30 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
               <br />
               Төлбөр амжилттай болсны дараа доорх товчийг дарна уу.
             </p>
+            {errors.api && (
+              <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2 w-full text-center">
+                {errors.api}
+              </p>
+            )}
             <button
               onClick={handlePaid}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-black text-lg py-4 rounded-xl transition-colors uppercase tracking-wide"
+              disabled={loading}
+              className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white font-black text-lg py-4 rounded-xl transition-colors uppercase tracking-wide"
             >
-              Төлбөр хийлээ
+              {loading ? "Хадгалж байна..." : "Төлбөр хийлээ"}
             </button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* ── Success Modal ── */}
+      {/* Success Modal */}
       <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-center text-xl font-black text-green-700 uppercase">
               Амжилттай!
             </DialogTitle>
-            <DialogDescription className="sr-only">
-              Таны сугалааны тасалбарын дугаарууд
-            </DialogDescription>
+            <DialogDescription className="sr-only">Таны сугалааны тасалбарын дугаарууд</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-3">
             <CheckCircle2 className="h-16 w-16 text-green-500" />
@@ -238,15 +247,18 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 mb-2">
                 Энэ дугаарыг хадгалаарай. Сугалааны үр дүн{" "}
-                <strong>{new Date(selectedLottery?.drawDate ?? "").toLocaleDateString("mn-MN")}</strong>
+                <strong>
+                  {selectedLottery?.drawDate
+                    ? new Date(selectedLottery.drawDate).toLocaleDateString("mn-MN")
+                    : ""}
+                </strong>
                 -д зарлагдана.
               </p>
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                Загвар: төлбөр батлагдмагц {newCodes.length} тасалбарын кодыг{" "}
-                <strong className="tabular-nums">{phone}</strong> дугаарт СМС-ээр автоматаар илгээнэ —
-                одоогоор зөвхөн интерфэйсийн дэмо.
+                Тасалбарын кодыг <strong className="tabular-nums">{phone}</strong> дугаарт СМС-ээр
+                илгээлээ.
               </p>
             </div>
             <button

@@ -10,17 +10,25 @@ import { CheckCircle2, Upload } from "lucide-react";
 
 interface FormState {
   carName: string;
+  carBrand: string;
+  carModel: string;
   ticketPrice: string;
   maxTickets: string;
+  endDate: string;
   drawDate: string;
+  prizeValue: string;
   description: string;
 }
 
 const emptyForm: FormState = {
   carName: "",
+  carBrand: "",
+  carModel: "",
   ticketPrice: "",
   maxTickets: "",
+  endDate: "",
   drawDate: "",
+  prizeValue: "",
   description: "",
 };
 
@@ -28,7 +36,9 @@ export default function CreateLotteryForm() {
   const router = useRouter();
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Partial<FormState>>({});
+  const [apiError, setApiError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [imageName, setImageName] = useState<string | null>(null);
 
   function set(field: keyof FormState) {
@@ -45,15 +55,38 @@ export default function CreateLotteryForm() {
       errs.ticketPrice = "Зөв үнэ оруулна уу";
     if (!form.maxTickets || isNaN(Number(form.maxTickets)) || Number(form.maxTickets) <= 0)
       errs.maxTickets = "Зөв тоо оруулна уу";
-    if (!form.drawDate) errs.drawDate = "Огноо сонгоно уу";
+    if (!form.endDate) errs.endDate = "Огноо сонгоно уу";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    setSuccess(true);
+    setLoading(true);
+    setApiError("");
+    const res = await fetch("/api/lotteries", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        carName: form.carName,
+        carBrand: form.carBrand,
+        carModel: form.carModel,
+        ticketPrice: form.ticketPrice,
+        maxTickets: form.maxTickets,
+        endDate: form.endDate,
+        drawDate: form.drawDate || form.endDate,
+        prizeValue: form.prizeValue || "0",
+        description: form.description,
+      }),
+    });
+    setLoading(false);
+    if (res.ok) {
+      setSuccess(true);
+    } else {
+      const data = await res.json();
+      setApiError(data.error ?? "Алдаа гарлаа");
+    }
   }
 
   if (success) {
@@ -80,7 +113,7 @@ export default function CreateLotteryForm() {
             </Button>
             <Button
               className="flex-1 bg-amber-500 hover:bg-amber-600 text-white"
-              onClick={() => router.push("/admin/lotteries")}
+              onClick={() => { router.push("/admin/lotteries"); router.refresh(); }}
             >
               Жагсаалт руу буцах
             </Button>
@@ -92,9 +125,8 @@ export default function CreateLotteryForm() {
 
   return (
     <Card>
-      <CardContent className="p-6">
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Car name */}
+      <CardContent className="p-4 sm:p-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="carName">Машины нэр</Label>
             <Input
@@ -107,15 +139,33 @@ export default function CreateLotteryForm() {
             {errors.carName && <p className="text-red-500 text-xs">{errors.carName}</p>}
           </div>
 
-          {/* Car image upload (UI only) */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="carBrand">Брэнд</Label>
+              <Input
+                id="carBrand"
+                value={form.carBrand}
+                onChange={set("carBrand")}
+                placeholder="MERCEDES BENZ"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="carModel">Модель</Label>
+              <Input
+                id="carModel"
+                value={form.carModel}
+                onChange={set("carModel")}
+                placeholder="G-CLASS"
+              />
+            </div>
+          </div>
+
           <div className="space-y-1.5">
             <Label>Машины зураг</Label>
-            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors">
+            <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors">
               <div className="flex flex-col items-center gap-2 text-gray-400">
-                <Upload className="h-8 w-8" />
-                <span className="text-sm">
-                  {imageName ? imageName : "Зураг оруулах (JPG, PNG)"}
-                </span>
+                <Upload className="h-7 w-7" />
+                <span className="text-sm">{imageName ? imageName : "Зураг оруулах (JPG, PNG)"}</span>
               </div>
               <input
                 type="file"
@@ -126,8 +176,7 @@ export default function CreateLotteryForm() {
             </label>
           </div>
 
-          {/* Price and max tickets row */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="ticketPrice">Тасалбарын үнэ (₮)</Label>
               <Input
@@ -156,21 +205,43 @@ export default function CreateLotteryForm() {
             </div>
           </div>
 
-          {/* Draw date */}
           <div className="space-y-1.5">
-            <Label htmlFor="drawDate">Сугалааны огноо</Label>
+            <Label htmlFor="prizeValue">Шагналын үнэ цэнэ (₮)</Label>
             <Input
-              id="drawDate"
-              type="date"
-              value={form.drawDate}
-              onChange={set("drawDate")}
-              min={new Date().toISOString().split("T")[0]}
-              className={errors.drawDate ? "border-red-400" : ""}
+              id="prizeValue"
+              type="number"
+              inputMode="numeric"
+              value={form.prizeValue}
+              onChange={set("prizeValue")}
+              placeholder="180000000"
             />
-            {errors.drawDate && <p className="text-red-500 text-xs">{errors.drawDate}</p>}
           </div>
 
-          {/* Description */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="endDate">Дуусах огноо</Label>
+              <Input
+                id="endDate"
+                type="date"
+                value={form.endDate}
+                onChange={set("endDate")}
+                min={new Date().toISOString().split("T")[0]}
+                className={errors.endDate ? "border-red-400" : ""}
+              />
+              {errors.endDate && <p className="text-red-500 text-xs">{errors.endDate}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="drawDate">Сугалааны огноо</Label>
+              <Input
+                id="drawDate"
+                type="date"
+                value={form.drawDate}
+                onChange={set("drawDate")}
+                min={new Date().toISOString().split("T")[0]}
+              />
+            </div>
+          </div>
+
           <div className="space-y-1.5">
             <Label htmlFor="description">Тайлбар</Label>
             <textarea
@@ -183,6 +254,10 @@ export default function CreateLotteryForm() {
             />
           </div>
 
+          {apiError && (
+            <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2">{apiError}</p>
+          )}
+
           <div className="flex gap-3 pt-2">
             <Button
               type="button"
@@ -192,8 +267,12 @@ export default function CreateLotteryForm() {
             >
               Цуцлах
             </Button>
-            <Button type="submit" className="flex-1 bg-amber-500 hover:bg-amber-600 text-white">
-              Үүсгэх
+            <Button
+              type="submit"
+              className="flex-1 bg-amber-500 hover:bg-amber-600 text-white"
+              disabled={loading}
+            >
+              {loading ? "Үүсгэж байна..." : "Үүсгэх"}
             </Button>
           </div>
         </form>

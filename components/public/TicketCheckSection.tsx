@@ -2,7 +2,7 @@
 
 import { type FormEvent, useMemo, useState } from "react";
 import type { Lottery, Ticket } from "@/lib/mock-data";
-import { findTicketsForPhoneDigits, formatMNT } from "@/lib/mock-data";
+import { formatMNT } from "@/lib/mock-data";
 import DarkHeroShell from "@/components/public/DarkHeroShell";
 import { CheckCircle2, XCircle } from "lucide-react";
 
@@ -19,7 +19,6 @@ function seededCaptcha(seed: string) {
 interface Props {
   lotteries: Lottery[];
   defaultLotteryId: string;
-  /** true: зөвхөн энэ сугалааны тасалбарууд */
   lockLotterySelect?: boolean;
   showHero?: boolean;
 }
@@ -35,6 +34,7 @@ export default function TicketCheckSection({
   const [captcha] = useState(() => seededCaptcha(defaultLotteryId));
   const [submitted, setSubmitted] = useState<false | "found" | "notfound">(false);
   const [matches, setMatches] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ phone?: string; captcha?: string }>({});
 
   const lotteryMeta = useMemo(
@@ -42,11 +42,12 @@ export default function TicketCheckSection({
     [lotteries, defaultLotteryId]
   );
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const errs: typeof errors = {};
     if (!/^\d{8}$/.test(phone)) errs.phone = "8 оронтой утасны дугаар оруулна уу";
-    if (parseInt(captchaInput, 10) !== captcha.answer) errs.captcha = "Хамгаалалтын хариулт буруу байна";
+    if (parseInt(captchaInput, 10) !== captcha.answer)
+      errs.captcha = "Хамгаалалтын хариулт буруу байна";
     setErrors(errs);
     if (Object.keys(errs).length > 0) {
       setSubmitted(false);
@@ -54,10 +55,19 @@ export default function TicketCheckSection({
       return;
     }
 
-    const scope = lockLotterySelect ? { lotteryId: defaultLotteryId } : undefined;
-    const list = findTicketsForPhoneDigits(phone, scope);
-    setMatches(list);
-    setSubmitted(list.length > 0 ? "found" : "notfound");
+    setLoading(true);
+    const params = new URLSearchParams({ phone });
+    if (lockLotterySelect) params.set("lotteryId", defaultLotteryId);
+    const res = await fetch(`/api/tickets/check?${params}`);
+    setLoading(false);
+    if (res.ok) {
+      const data = await res.json();
+      setMatches(data.tickets ?? []);
+      setSubmitted(data.tickets?.length > 0 ? "found" : "notfound");
+    } else {
+      setSubmitted("notfound");
+      setMatches([]);
+    }
   }
 
   if (lotteries.length === 0) return null;
@@ -77,7 +87,9 @@ export default function TicketCheckSection({
               {lotteryMeta.carModel} СУГАЛАА
             </h2>
             <div className="mt-8 inline-block rounded-2xl border border-white/20 bg-white/10 px-6 py-3 backdrop-blur">
-              <p className="text-amber-400 font-black text-2xl sm:text-3xl">{formatMNT(lotteryMeta.prizeValue)}</p>
+              <p className="text-amber-400 font-black text-2xl sm:text-3xl">
+                {formatMNT(lotteryMeta.prizeValue)}
+              </p>
               <p className="mt-0.5 text-xs uppercase tracking-wider text-white/60">Нийт шагналын дүн</p>
             </div>
           </div>
@@ -87,8 +99,6 @@ export default function TicketCheckSection({
       <div className="flex flex-1 flex-col lg:mx-auto lg:w-full lg:max-w-lg">
         <div className="mx-auto w-full max-w-lg flex-1 px-4 pt-4 pb-6 lg:pb-8">
           <form onSubmit={handleSubmit} className="w-full">
-            
-
             <div className="mb-4">
               <label className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.15em] text-gray-700">
                 Утасны дугаар
@@ -107,7 +117,9 @@ export default function TicketCheckSection({
                   setMatches([]);
                 }}
                 className={`h-12 w-full rounded-lg border-2 px-4 text-xl font-mono tracking-widest transition-colors focus:outline-none ${
-                  errors.phone ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-amber-400"
+                  errors.phone
+                    ? "border-red-400 focus:border-red-500"
+                    : "border-gray-200 focus:border-amber-400"
                 }`}
               />
               {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
@@ -133,15 +145,16 @@ export default function TicketCheckSection({
                 />
                 <button
                   type="submit"
-                  className="h-11 rounded-lg px-5 text-sm font-black uppercase tracking-wide text-white shadow-sm transition-colors hover:bg-amber-600 active:bg-amber-700 bg-amber-500"
+                  disabled={loading}
+                  className="h-11 rounded-lg px-5 text-sm font-black uppercase tracking-wide text-white shadow-sm transition-colors hover:bg-amber-600 active:bg-amber-700 bg-amber-500 disabled:opacity-60"
                 >
-                  Илгээх
+                  {loading ? "..." : "Илгээх"}
                 </button>
               </div>
               {errors.captcha && <p className="mt-1 text-xs text-red-500">{errors.captcha}</p>}
             </div>
 
-            {(submitted === "found" && matches.length > 0) || submitted === "notfound" ? (
+            {((submitted === "found" && matches.length > 0) || submitted === "notfound") && (
               <output className="block border-t border-gray-100 pt-8" aria-live="polite">
                 {submitted === "found" && (
                   <div className="overflow-hidden rounded-xl border-2 border-amber-200 bg-gradient-to-br from-white to-amber-50/60 shadow-sm">
@@ -152,22 +165,25 @@ export default function TicketCheckSection({
                     </div>
                     <div className="divide-y divide-amber-100 px-3 py-2">
                       {matches.map((t, idx) => (
-                        <div key={`${t.lotteryId}-${t.code}-${idx}`} className="flex flex-col gap-2 py-3 first:pt-2">
+                        <div
+                          key={`${t.lotteryId}-${t.code}-${idx}`}
+                          className="flex flex-col gap-2 py-3 first:pt-2"
+                        >
                           <div className="text-center">
-                            <span className="text-xs font-bold uppercase tracking-wide text-gray-700">{t.lotteryName}</span>
-                            <span className="mx-2 text-gray-300">·</span>
-                            <span className="text-xs tabular-nums font-black text-amber-600">{t.lotteryId}</span>
+                            <span className="text-xs font-bold uppercase tracking-wide text-gray-700">
+                              {t.lotteryName}
+                            </span>
                           </div>
                           <TicketCodeCircles code={t.code} />
                           <p className="text-center text-[11px] text-gray-500">
-                            Утас: <span className="tabular-nums font-semibold text-gray-700">{t.phone}</span>
+                            Огноо: <span className="tabular-nums font-semibold text-gray-700">{t.purchaseDate}</span>
                           </p>
                         </div>
                       ))}
                     </div>
                     <div className="rounded-b-xl border-t border-amber-100 bg-amber-50/80 px-3 py-3 text-center">
                       <CheckCircle2 className="mx-auto mb-1 size-5 text-green-600" aria-hidden />
-                      <p className="text-xs text-gray-700">Дэмо: ирээдүйд ижил мэдээллийг СМС-ээр илгээнэ.</p>
+                      <p className="text-xs text-gray-700">Тасалбар олдлоо. Хожигч зарлагдах хүртэл хүлээнэ үү.</p>
                     </div>
                   </div>
                 )}
@@ -176,15 +192,18 @@ export default function TicketCheckSection({
                   <div className="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-4 text-sm text-red-950 shadow-sm">
                     <div className="mb-2 flex items-center justify-center gap-2">
                       <XCircle className="size-6 shrink-0 text-red-500" aria-hidden />
-                      <span className="font-black uppercase tracking-wide text-red-800">Тасалбар олдсонгүй</span>
+                      <span className="font-black uppercase tracking-wide text-red-800">
+                        Тасалбар олдсонгүй
+                      </span>
                     </div>
                     <p className="text-center text-red-900/95">
-                      Энэ утасны дугаарын тасалбар олдсонгүй. Дугаар эсвэл хамгаалалтаа шалгаад дахин оролдоно уу.
+                      Энэ утасны дугаарын тасалбар олдсонгүй. Дугаар эсвэл хамгаалалтаа шалгаад
+                      дахин оролдоно уу.
                     </p>
                   </div>
                 )}
               </output>
-            ) : null}
+            )}
           </form>
         </div>
       </div>

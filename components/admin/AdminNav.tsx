@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, List, Ticket, PlusCircle, Trophy } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard, List, Ticket, PlusCircle, Trophy, LogOut, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -13,6 +13,13 @@ const navItems = [
 
 export default function AdminNav() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleLogout() {
+    await fetch("/api/auth", { method: "DELETE" });
+    router.push("/admin/login");
+    router.refresh();
+  }
 
   const isActive = (href: string, exact: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
@@ -40,7 +47,7 @@ export default function AdminNav() {
             {label}
           </Link>
         ))}
-        <div className="mt-auto pt-4 border-t border-gray-100">
+        <div className="mt-auto pt-4 border-t border-gray-100 flex flex-col gap-1">
           <Link
             href="/admin/lotteries/new"
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-amber-600 hover:bg-amber-50 transition-colors"
@@ -48,6 +55,25 @@ export default function AdminNav() {
             <PlusCircle className="h-4 w-4" />
             Шинэ сугалаа
           </Link>
+          <Link
+            href="/admin/setup"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+              isActive("/admin/setup", true)
+                ? "bg-amber-50 text-amber-700"
+                : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+            )}
+          >
+            <Database className="h-4 w-4" />
+            DB Тохиргоо
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors text-left"
+          >
+            <LogOut className="h-4 w-4" />
+            Гарах
+          </button>
         </div>
       </aside>
 
@@ -66,13 +92,6 @@ export default function AdminNav() {
             {label}
           </Link>
         ))}
-        <Link
-          href="/admin/lotteries/new"
-          className="flex-1 flex flex-col items-center justify-center py-2 text-xs font-medium text-amber-600 min-h-[56px]"
-        >
-          <PlusCircle className="h-5 w-5 mb-0.5" />
-          Шинэ
-        </Link>
       </nav>
     </>
   );
