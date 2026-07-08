@@ -19,7 +19,6 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
   const [qpayOpen, setQpayOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
   const [newCodes, setNewCodes] = useState<string[]>([]);
-  const [smsSession, setSmsSession] = useState<{ displayInstruction: string; smsUri: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ phone?: string; lottery?: string; quantity?: string; api?: string }>({});
 
@@ -56,7 +55,6 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
     if (res.ok) {
       const data = await res.json();
       setNewCodes((data.tickets ?? []).map((t: { code: string }) => t.code));
-      setSmsSession(data.session ?? null);
       setQpayOpen(false);
       setSuccessOpen(true);
     } else {
@@ -239,33 +237,22 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
               <p className="text-sm text-gray-500">{newCodes.length} тасалбар бүртгэгдлээ</p>
             </div>
 
-            {smsSession ? (
-              <div className="w-full rounded-xl bg-amber-50 border border-amber-200 px-4 py-4 space-y-3 text-left">
-                <p className="text-sm font-semibold text-gray-900">Тасалбарын дугаараа авах:</p>
-                <p className="text-sm text-gray-700 leading-relaxed">{smsSession.displayInstruction}</p>
-                <a
-                  href={smsSession.smsUri}
-                  className="flex items-center justify-center w-full bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold py-3 rounded-lg transition-colors"
-                >
-                  SMS апп нээх →
-                </a>
-                <p className="text-xs text-gray-500 text-center">
-                  SMS илгээсний дараа тасалбарын дугаарууд автоматаар ирнэ
-                </p>
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500">Тасалбар бүртгэгдлээ.</p>
-            )}
-
-            {selectedLottery?.drawDate && (
-              <p className="text-xs text-gray-500">
-                Сугалааны үр дүн{" "}
-                <span className="font-medium text-gray-700">
-                  {new Date(selectedLottery.drawDate).toLocaleDateString("mn-MN")}
-                </span>
-                -д зарлагдана.
+            <div className="w-full rounded-xl bg-amber-50 border border-amber-200 px-4 py-4 text-center">
+              <p className="text-sm text-gray-700">
+                Тасалбарын дугаарыг{" "}
+                <span className="font-semibold text-gray-900 tabular-nums">{phone}</span>{" "}
+                дугаарт СМС-ээр илгээлээ.
               </p>
-            )}
+              {selectedLottery?.drawDate && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Сугалааны үр дүн{" "}
+                  <span className="font-medium text-gray-700">
+                    {new Date(selectedLottery.drawDate).toLocaleDateString("mn-MN")}
+                  </span>
+                  -д зарлагдана.
+                </p>
+              )}
+            </div>
 
             <button
               onClick={() => setSuccessOpen(false)}

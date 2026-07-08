@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
-import { createTicketSession } from "@/lib/sms";
+import { sendSMS } from "@/lib/sms";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -64,7 +64,11 @@ export async function POST(req: NextRequest) {
     .eq("id", body.lotteryId);
 
   const codes = (data ?? []).map((t: { code: string }) => t.code);
-  const session = await createTicketSession(body.phone, codes);
+  const smsBody =
+    codes.length === 1
+      ? `LottoMN: Tany "${lottery.car_name}" sugalaany tasalbarin dugaar: ${codes[0]}. Aztai baina!`
+      : `LottoMN: Tany "${lottery.car_name}" sugalaany ${codes.length} tasalbar: ${codes.join(", ")}. Aztai baina!`;
+  await sendSMS(body.phone, smsBody);
 
-  return NextResponse.json({ tickets: data, session }, { status: 201 });
+  return NextResponse.json({ tickets: data }, { status: 201 });
 }
