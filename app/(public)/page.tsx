@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getLotteries, getActiveLotteries } from "@/lib/db";
 import { formatMNT } from "@/lib/mock-data";
 import CountdownTimer from "@/components/public/CountdownTimer";
@@ -20,31 +21,45 @@ export default async function LandingPage() {
     <div className="min-h-screen bg-white">
       {featured && (
         <>
-          <DarkHeroShell>
-            <div className="relative z-10 text-center px-4 pt-10 pb-8">
-              <span className="inline-block bg-amber-500 text-white text-[10px] font-semibold uppercase tracking-wider px-3 py-1 rounded-full mb-3">
-                Идэвхтэй сугалаа
-              </span>
-              <p className="text-amber-400 font-black text-2xl sm:text-3xl uppercase tracking-widest leading-none mb-1 drop-shadow-lg">
-                {featured.carBrand}
-              </p>
-              <h1 className="text-white font-black text-3xl sm:text-4xl uppercase tracking-widest leading-none mb-6 drop-shadow-lg">
-                {featured.carModel} СУГАЛАА
-              </h1>
-
-              <div className="inline-block bg-white/10 backdrop-blur rounded-2xl px-6 py-3 mb-6 border border-white/20">
-                <p className="text-amber-400 font-black text-2xl sm:text-3xl">
-                  {formatMNT(featured.prizeValue)}
+          <Link href={`/lottery/${featured.id}/purchase`}>
+            <DarkHeroShell>
+              <div className="relative z-10 text-center px-4 pt-10 pb-8">
+                <span className="inline-block bg-amber-500 text-white text-[10px] font-semibold uppercase tracking-wider px-3 py-1 rounded-full mb-3">
+                  Идэвхтэй сугалаа
+                </span>
+                <p className="text-amber-400 font-black text-2xl sm:text-3xl uppercase tracking-widest leading-none mb-1 drop-shadow-lg">
+                  {featured.carBrand}
                 </p>
-                <p className="text-white/60 text-xs mt-0.5 uppercase tracking-wider">Нийт шагналын дүн</p>
-              </div>
+                <h1 className="text-white font-black text-3xl sm:text-4xl uppercase tracking-widest leading-none mb-4 drop-shadow-lg">
+                  {featured.carModel} СУГАЛАА
+                </h1>
 
-              <div className="mb-4">
-                <p className="text-white/50 text-xs uppercase tracking-wider mb-2">Дуусах хугацаа</p>
-                <CountdownTimer endDate={featured.endDate} />
+                {featured.carImage && featured.carImage !== "/images/car-placeholder.svg" && (
+                  <div className="relative w-full max-w-sm mx-auto h-44 mb-4">
+                    <Image
+                      src={featured.carImage}
+                      alt={`${featured.carBrand} ${featured.carModel}`}
+                      fill
+                      className="object-contain drop-shadow-2xl"
+                      priority
+                    />
+                  </div>
+                )}
+
+                <div className="inline-block bg-white/10 backdrop-blur rounded-2xl px-6 py-3 mb-6 border border-white/20">
+                  <p className="text-amber-400 font-black text-2xl sm:text-3xl">
+                    {formatMNT(featured.prizeValue)}
+                  </p>
+                  <p className="text-white/60 text-xs mt-0.5 uppercase tracking-wider">Нийт шагналын дүн</p>
+                </div>
+
+                <div className="mb-4">
+                  <p className="text-white/50 text-xs uppercase tracking-wider mb-2">Дуусах хугацаа</p>
+                  <CountdownTimer endDate={featured.endDate} />
+                </div>
               </div>
-            </div>
-          </DarkHeroShell>
+            </DarkHeroShell>
+          </Link>
 
           <div className="bg-amber-50 border-b border-amber-100 px-4 py-3">
             <div className="max-w-lg mx-auto flex items-center justify-between gap-4">
