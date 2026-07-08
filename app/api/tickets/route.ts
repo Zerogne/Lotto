@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
-import { sendSMS } from "@/lib/sms";
+import { createTicketSession } from "@/lib/sms";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -63,13 +63,8 @@ export async function POST(req: NextRequest) {
     .update({ tickets_sold: lottery.tickets_sold + quantity })
     .eq("id", body.lotteryId);
 
-  // Send ticket codes via SMS
-  const codes = (data ?? []).map((t: { code: string }) => t.code).join(", ");
-  const smsText =
-    quantity === 1
-      ? `LottoMN: Таны "${lottery.car_name}" сугалааны тасалбарын дугаар: ${codes}. Азтай байна!`
-      : `LottoMN: Таны "${lottery.car_name}" сугалааны ${quantity} тасалбарын дугаарууд: ${codes}. Азтай байна!`;
-  await sendSMS(body.phone, smsText);
+  const codes = (data ?? []).map((t: { code: string }) => t.code);
+  const session = await createTicketSession(body.phone, codes);
 
-  return NextResponse.json({ tickets: data }, { status: 201 });
+  return NextResponse.json({ tickets: data, session }, { status: 201 });
 }
