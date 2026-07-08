@@ -21,12 +21,8 @@ export default async function LandingPage() {
       {featured && (
         <>
           <DarkHeroShell>
-            <div className="absolute inset-0 flex items-center justify-center opacity-10 select-none pointer-events-none">
-              <span className="text-[160px] leading-none">🚗</span>
-            </div>
-
             <div className="relative z-10 text-center px-4 pt-10 pb-8">
-              <span className="inline-block bg-amber-500 text-white text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full mb-3">
+              <span className="inline-block bg-amber-500 text-white text-[10px] font-semibold uppercase tracking-wider px-3 py-1 rounded-full mb-3">
                 Идэвхтэй сугалаа
               </span>
               <p className="text-amber-400 font-black text-2xl sm:text-3xl uppercase tracking-widest leading-none mb-1 drop-shadow-lg">
@@ -44,7 +40,7 @@ export default async function LandingPage() {
               </div>
 
               <div className="mb-4">
-                <p className="text-white/50 text-xs uppercase tracking-widest mb-2">Дуусах хугацаа</p>
+                <p className="text-white/50 text-xs uppercase tracking-wider mb-2">Дуусах хугацаа</p>
                 <CountdownTimer endDate={featured.endDate} />
               </div>
             </div>
@@ -53,8 +49,8 @@ export default async function LandingPage() {
           <div className="bg-amber-50 border-b border-amber-100 px-4 py-3">
             <div className="max-w-lg mx-auto flex items-center justify-between gap-4">
               <div className="text-center">
-                <p className="text-[10px] uppercase tracking-wider text-gray-500">Нийт авсан сугалаа</p>
-                <p className="font-black text-gray-900 text-sm">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500">Нийт авсан</p>
+                <p className="font-bold text-gray-900 text-sm">
                   {featured.ticketsSold.toLocaleString()}{" "}
                   <span className="text-gray-400 font-normal">/ {featured.maxTickets.toLocaleString()}</span>
                 </p>
@@ -62,12 +58,14 @@ export default async function LandingPage() {
               <div className="h-8 w-px bg-amber-200" />
               <div className="text-center">
                 <p className="text-[10px] uppercase tracking-wider text-gray-500">Тасалбарын үнэ</p>
-                <p className="font-black text-amber-600 text-sm">{formatMNT(featured.ticketPrice)}</p>
+                <p className="font-bold text-amber-600 text-sm">{formatMNT(featured.ticketPrice)}</p>
               </div>
               <div className="h-8 w-px bg-amber-200" />
               <div className="text-center">
-                <p className="text-[10px] uppercase tracking-wider text-gray-500">Сугалааны дугаар</p>
-                <p className="font-black text-gray-900 text-sm">{featured.id.slice(0, 8).toUpperCase()}</p>
+                <p className="text-[10px] uppercase tracking-wider text-gray-500">Үлдсэн тасалбар</p>
+                <p className="font-bold text-gray-900 text-sm">
+                  {Math.max(0, featured.maxTickets - featured.ticketsSold).toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
@@ -90,9 +88,9 @@ export default async function LandingPage() {
           {activeLotteries.length > 1 && (
             <div className="border-t border-gray-200">
               <div className="max-w-lg mx-auto px-4 py-6 pb-32 lg:pb-8">
-                <label className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.15em] text-gray-700">
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                   Бусад сугалаанууд
-                </label>
+                </p>
                 <div className="space-y-3">
                   {activeLotteries.slice(1).map((lottery) => (
                     <HomeLotteryCard key={lottery.id} lottery={lottery} />

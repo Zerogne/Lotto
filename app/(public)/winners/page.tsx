@@ -30,23 +30,22 @@ export default async function WinnersPage() {
               key={winner.id}
               className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
             >
-              <div className="relative aspect-video bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                <span className="text-white/20 text-6xl">🚗</span>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                <div className="absolute bottom-3 left-3 right-3">
-                  <span className="inline-block bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                    ХОЖИГЧ
+              <div className="px-4 pt-4 pb-2 flex items-start justify-between gap-3">
+                <div>
+                  <span className="inline-block bg-amber-100 text-amber-700 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2">
+                    Хожигч
                   </span>
+                  <h2 className="text-base font-bold text-gray-900 leading-tight">{winner.carName}</h2>
+                  <p className="text-amber-600 font-semibold text-sm mt-0.5">{formatMNT(winner.prizeValue)}</p>
                 </div>
+                <Trophy className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
               </div>
-
-              <div className="p-4">
-                <h2 className="text-lg font-bold text-gray-900 mb-1">{winner.carName}</h2>
-                <p className="text-amber-500 font-bold mb-3">{formatMNT(winner.prizeValue)}</p>
+              <div className="px-4 pb-4">
+                <div className="h-px bg-gray-100 mb-3" />
 
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500">Хожигч</span>
+                    <span className="text-gray-500">Утас</span>
                     <span className="font-mono font-medium text-gray-900">{winner.winnerPhone}</span>
                   </div>
                   <div className="flex items-center justify-between">

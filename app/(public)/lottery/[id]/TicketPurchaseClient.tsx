@@ -89,22 +89,20 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
 
       <div className="flex-1 px-4 pt-4 pb-32 lg:pb-10 max-w-lg mx-auto w-full">
         <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-center">
-          <p className="text-sm text-gray-800 italic leading-relaxed">
+          <p className="text-sm text-gray-700 leading-relaxed">
             {phoneConfirmed ? (
               <>
-                <strong className="not-italic">{phone}</strong> дугаар дээр сугалааны эрх
+                <span className="font-semibold text-gray-900">{phone}</span> дугаар дээр сугалааны эрх
                 бүртгэгдэнэ. Төлбөр баталгаажмагц тасалбарын дугаарууд СМС-ээр илгээгдэнэ.
-                <br />
-                <span className="text-amber-700 font-medium">Таныг Азын тэнгэр ивээг</span>
               </>
             ) : (
-              "Утас + сугалаа + тоо ширхгээ сонгоод төлбөр хийнэ үү"
+              "Утас, сугалаа, тоо ширхгийг сонгоод төлбөр хийнэ үү"
             )}
           </p>
         </div>
 
         <div className="mb-4">
-          <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-gray-700 mb-1.5">
+          <label className="block text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
             Утасны дугаар:
           </label>
           <input
@@ -123,7 +121,7 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
         </div>
 
         <div className="mb-4">
-          <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-gray-700 mb-1.5">
+          <label className="block text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
             Машины сугалаа
           </label>
           <select
@@ -144,7 +142,7 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
         </div>
 
         <div className="mb-6">
-          <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-gray-700 mb-1.5">
+          <label className="block text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
             Хэдэн тасалбар авах вэ
           </label>
           <input
@@ -263,7 +261,7 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
             </div>
             <button
               onClick={() => setSuccessOpen(false)}
-              className="w-full bg-gray-900 hover:bg-gray-800 text-white font-black py-3 rounded-xl transition-colors uppercase"
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition-colors"
             >
               Хаах
             </button>

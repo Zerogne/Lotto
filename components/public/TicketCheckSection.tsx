@@ -100,7 +100,7 @@ export default function TicketCheckSection({
         <div className="mx-auto w-full max-w-lg flex-1 px-4 pt-4 pb-6 lg:pb-8">
           <form onSubmit={handleSubmit} className="w-full">
             <div className="mb-4">
-              <label className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.15em] text-gray-700">
+              <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                 Утасны дугаар
               </label>
               <input
@@ -126,9 +126,12 @@ export default function TicketCheckSection({
             </div>
 
             <div className="mb-6">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="whitespace-nowrap font-black text-base text-gray-900">
-                  {captcha.a}+{captcha.b} =
+              <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                Шалгах тоо
+              </label>
+              <div className="flex items-center gap-2">
+                <span className="whitespace-nowrap font-semibold text-base text-gray-700 tabular-nums">
+                  {captcha.a} + {captcha.b} =
                 </span>
                 <input
                   type="number"
@@ -139,16 +142,16 @@ export default function TicketCheckSection({
                     setSubmitted(false);
                     setMatches([]);
                   }}
-                  className={`h-11 w-14 rounded-lg border-2 text-center text-base font-bold focus:outline-none ${
-                    errors.captcha ? "border-red-400" : "border-gray-300 focus:border-amber-400"
+                  className={`h-11 w-16 rounded-lg border-2 text-center text-base font-bold focus:outline-none ${
+                    errors.captcha ? "border-red-400" : "border-gray-200 focus:border-amber-400"
                   }`}
                 />
                 <button
                   type="submit"
                   disabled={loading}
-                  className="h-11 rounded-lg px-5 text-sm font-black uppercase tracking-wide text-white shadow-sm transition-colors hover:bg-amber-600 active:bg-amber-700 bg-amber-500 disabled:opacity-60"
+                  className="h-11 flex-1 rounded-lg px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-600 active:bg-amber-700 bg-amber-500 disabled:opacity-60"
                 >
-                  {loading ? "..." : "Илгээх"}
+                  {loading ? "Шалгаж байна…" : "Шалгах"}
                 </button>
               </div>
               {errors.captcha && <p className="mt-1 text-xs text-red-500">{errors.captcha}</p>}

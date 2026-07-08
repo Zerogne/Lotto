@@ -84,18 +84,13 @@ export default function HomeLotteryCard({ lottery }: Props) {
             </div>
           </>
         ) : (
-          <div className="space-y-0.5">
-            <p className="font-bold tabular-nums text-[15px] text-slate-500">
-              {formatMNT(lottery.prizeValue)}
-            </p>
-            <p className="text-[13px] font-semibold text-slate-500">
-              {lottery.status === "ended"
-                ? "Дууссан"
-                : lottery.status === "drawing"
-                  ? "Шалгаруулж байна"
-                  : lottery.status}
-            </p>
-          </div>
+          <p className="text-[13px] font-medium text-slate-500">
+            {lottery.status === "ended"
+              ? "Дууссан"
+              : lottery.status === "drawing"
+                ? "Шалгаруулж байна"
+                : lottery.status}
+          </p>
         )}
       </div>
 
