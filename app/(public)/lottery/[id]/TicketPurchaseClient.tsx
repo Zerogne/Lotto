@@ -147,33 +147,22 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
           <label className="block text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
             Хэдэн тасалбар авах вэ
           </label>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                const v = Math.max(1, qtyNum - 1);
-                setQuantity(String(v));
-                setErrors((prev) => ({ ...prev, quantity: undefined }));
-              }}
-              className="w-12 h-12 rounded-lg border-2 border-gray-200 text-xl font-bold text-gray-700 flex items-center justify-center active:bg-gray-100 select-none"
-            >
-              −
-            </button>
-            <span className="flex-1 h-12 flex items-center justify-center text-xl font-bold tabular-nums border-2 border-gray-200 rounded-lg">
-              {qtyNum}
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                const v = Math.min(20, qtyNum + 1);
-                setQuantity(String(v));
-                setErrors((prev) => ({ ...prev, quantity: undefined }));
-              }}
-              className="w-12 h-12 rounded-lg border-2 border-gray-200 text-xl font-bold text-gray-700 flex items-center justify-center active:bg-gray-100 select-none"
-            >
-              +
-            </button>
-          </div>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={20}
+            value={quantity}
+            onChange={(e) => {
+              setQuantity(e.target.value);
+              setErrors((prev) => ({ ...prev, quantity: undefined }));
+            }}
+            onBlur={() => {
+              const v = Math.min(20, Math.max(1, Number.parseInt(quantity, 10) || 1));
+              setQuantity(String(v));
+            }}
+            className="w-full h-12 border-2 border-gray-200 rounded-lg px-4 text-lg font-bold tabular-nums focus:outline-none focus:border-amber-400"
+          />
           {errors.quantity && <p className="text-red-500 text-xs mt-1">{errors.quantity}</p>}
         </div>
 
