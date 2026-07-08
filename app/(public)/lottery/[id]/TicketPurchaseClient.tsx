@@ -239,26 +239,32 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
               <p className="text-sm text-gray-500">{newCodes.length} тасалбар бүртгэгдлээ</p>
             </div>
 
-            {smsSession ? (
-              <div className="w-full rounded-xl bg-amber-50 border border-amber-200 px-4 py-4 text-left space-y-3">
-                <p className="text-sm font-semibold text-gray-900">Тасалбарын дугаараа авах:</p>
-                <p className="text-sm text-gray-700 leading-relaxed">{smsSession.displayInstruction}</p>
+            {/* Ticket codes displayed on screen */}
+            <div className="w-full space-y-2">
+              {newCodes.map((code, idx) => (
+                <div key={`${code}-${idx}`} className="flex justify-center gap-2">
+                  {code.split("").map((digit, i) => (
+                    <div
+                      key={i}
+                      className="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center font-black text-base shadow"
+                    >
+                      {digit}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {/* SMS instruction */}
+            {smsSession && (
+              <div className="w-full rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 space-y-2">
+                <p className="text-xs text-gray-600 leading-relaxed">{smsSession.displayInstruction}</p>
                 <a
                   href={smsSession.smsUri}
-                  className="flex items-center justify-center w-full bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold py-3 rounded-lg transition-colors"
+                  className="flex items-center justify-center w-full bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
                 >
-                  SMS апп нээх
+                  SMS-ээр авах
                 </a>
-                <p className="text-xs text-gray-500 text-center">
-                  SMS илгээсний дараа тасалбарын дугаарууд автоматаар ирнэ
-                </p>
-              </div>
-            ) : (
-              <div className="w-full rounded-xl bg-amber-50 border border-amber-200 px-4 py-4">
-                <p className="text-sm text-gray-700">Тасалбарын дугаарыг{" "}
-                  <span className="font-semibold text-gray-900 tabular-nums">{phone}</span>{" "}
-                  дугаарт илгээлээ.
-                </p>
               </div>
             )}
 
