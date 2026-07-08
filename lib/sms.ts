@@ -32,13 +32,15 @@ export async function createTicketSession(
   }
 
   try {
+    const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://lottomn.vercel.app"}/api/verify-callback`;
+
     const res = await fetch("https://api.verify.mn/sessions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${VERIFY_MN_API_KEY}`,
       },
-      body: JSON.stringify({ phone, text: triggerText, responseSms }),
+      body: JSON.stringify({ phone, text: triggerText, responseSms, callback: callbackUrl }),
     });
     if (!res.ok) {
       console.error("[verify.mn] session error:", res.status, await res.text());
