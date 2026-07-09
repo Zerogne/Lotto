@@ -14,8 +14,8 @@ interface Props {
 
 const BANK_INFO = {
   bank: "Хаан банк",
-  account: "5022XXXXXXXX",
-  name: "BLCK LLC",
+  account: "MN100005005434023440 ",
+  name: "Ядам Оюунбат",
 };
 
 export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Props) {
