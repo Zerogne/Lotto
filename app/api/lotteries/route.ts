@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
   const { data, error } = await db
     .from("lotteries")
     .insert({
+      id: crypto.randomUUID(),
       car_name: body.carName,
       car_brand: body.carBrand ?? "",
       car_model: body.carModel ?? "",
