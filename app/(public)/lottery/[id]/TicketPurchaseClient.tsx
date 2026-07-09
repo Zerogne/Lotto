@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Lottery, formatMNT } from "@/lib/mock-data";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { QrCode, CheckCircle2, ChevronLeft } from "lucide-react";
+import { CheckCircle2, ChevronLeft, Building2 } from "lucide-react";
 import DarkHeroShell from "@/components/public/DarkHeroShell";
 
 interface Props {
@@ -12,13 +12,17 @@ interface Props {
   initialLotteryId: string;
 }
 
+const BANK_INFO = {
+  bank: "Хаан банк",
+  account: "5022XXXXXXXX",
+  name: "BLCK LLC",
+};
+
 export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Props) {
   const [phone, setPhone] = useState("");
   const [selectedLotteryId, setSelectedLotteryId] = useState(initialLotteryId);
   const [quantity, setQuantity] = useState("1");
-  const [qpayOpen, setQpayOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
-  const [newCodes, setNewCodes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ phone?: string; lottery?: string; quantity?: string; api?: string }>({});
 
@@ -29,41 +33,32 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
   const qtyNum = Number.parseInt(quantity, 10) || 1;
   const totalAmount = (selectedLottery?.ticketPrice ?? 0) * qtyNum;
 
-  function handleOpenPay() {
+  function validate() {
     const errs: typeof errors = {};
     if (!/^\d{8}$/.test(phone)) errs.phone = "8 оронтой утасны дугаар оруулна уу";
     if (!selectedLottery) errs.lottery = "Сугалаа сонгоно уу";
     if (!(qtyNum >= 1 && qtyNum <= 20)) errs.quantity = "Тоо ширхэг 1-20 хооронд байна";
     setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
-    setQpayOpen(true);
+    return Object.keys(errs).length === 0;
   }
 
-  async function handlePaid() {
+  async function handleSubmit() {
+    if (!validate()) return;
     setLoading(true);
     setErrors({});
     const res = await fetch("/api/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        phone,
-        lotteryId: selectedLottery?.id,
-        quantity: qtyNum,
-      }),
+      body: JSON.stringify({ phone, lotteryId: selectedLottery?.id, quantity: qtyNum }),
     });
     setLoading(false);
     if (res.ok) {
-      const data = await res.json();
-      setNewCodes((data.tickets ?? []).map((t: { code: string }) => t.code));
-      setQpayOpen(false);
       setSuccessOpen(true);
     } else {
       const data = await res.json();
       setErrors({ api: data.error ?? "Алдаа гарлаа" });
     }
   }
-
-  const phoneConfirmed = phone.length === 8;
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -88,16 +83,28 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
       </DarkHeroShell>
 
       <div className="flex-1 px-4 pt-4 pb-32 lg:pb-10 max-w-lg mx-auto w-full">
-        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-center">
-          <p className="text-sm text-gray-700 leading-relaxed">
-            {phoneConfirmed ? (
-              <>
-                <span className="font-semibold text-gray-900">{phone}</span> дугаар дээр сугалааны эрх
-                бүртгэгдэнэ. Төлбөр баталгаажмагц тасалбарын дугаарууд СМС-ээр илгээгдэнэ.
-              </>
-            ) : (
-              "Утас, сугалаа, тоо ширхгийг сонгоод төлбөр хийнэ үү"
-            )}
+        {/* Bank info */}
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Building2 className="h-4 w-4 text-amber-600" />
+            <p className="text-sm font-bold text-amber-800">Банкны шилжүүлэг</p>
+          </div>
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-500">Банк</span>
+              <span className="font-semibold text-gray-900">{BANK_INFO.bank}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Дансны дугаар</span>
+              <span className="font-semibold text-gray-900 tabular-nums">{BANK_INFO.account}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Хүлээн авагч</span>
+              <span className="font-semibold text-gray-900">{BANK_INFO.name}</span>
+            </div>
+          </div>
+          <p className="text-xs text-amber-700 mt-2">
+            Шилжүүлэг хийсний дараа таны утасны дугаарт тасалбарын код илгээгдэнэ.
           </p>
         </div>
 
@@ -112,9 +119,7 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
             onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
             placeholder="••••••••"
             className={`w-full h-12 border-2 rounded-lg px-4 text-xl font-mono tracking-widest focus:outline-none transition-colors ${
-              errors.phone
-                ? "border-red-400 focus:border-red-500"
-                : "border-gray-200 focus:border-amber-400"
+              errors.phone ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-amber-400"
             }`}
           />
           {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
@@ -126,10 +131,7 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
           </label>
           <select
             value={selectedLotteryId}
-            onChange={(e) => {
-              setSelectedLotteryId(e.target.value);
-              setErrors((prev) => ({ ...prev, lottery: undefined }));
-            }}
+            onChange={(e) => { setSelectedLotteryId(e.target.value); setErrors((p) => ({ ...p, lottery: undefined })); }}
             className="w-full h-12 border-2 border-gray-200 rounded-lg px-3 text-sm font-black uppercase tracking-wide focus:outline-none focus:border-amber-400"
           >
             {lotteries.map((l) => (
@@ -138,7 +140,6 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
               </option>
             ))}
           </select>
-          {errors.lottery && <p className="text-red-500 text-xs mt-1">{errors.lottery}</p>}
         </div>
 
         <div className="mb-6">
@@ -151,14 +152,8 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
             min={1}
             max={20}
             value={quantity}
-            onChange={(e) => {
-              setQuantity(e.target.value);
-              setErrors((prev) => ({ ...prev, quantity: undefined }));
-            }}
-            onBlur={() => {
-              const v = Math.min(20, Math.max(1, Number.parseInt(quantity, 10) || 1));
-              setQuantity(String(v));
-            }}
+            onChange={(e) => { setQuantity(e.target.value); setErrors((p) => ({ ...p, quantity: undefined })); }}
+            onBlur={() => setQuantity(String(Math.min(20, Math.max(1, Number.parseInt(quantity, 10) || 1))))}
             className="w-full h-12 border-2 border-gray-200 rounded-lg px-4 text-lg font-bold tabular-nums focus:outline-none focus:border-amber-400"
           />
           {errors.quantity && <p className="text-red-500 text-xs mt-1">{errors.quantity}</p>}
@@ -167,93 +162,45 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
         <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Төлбөрийн дүн</p>
           <p className="text-2xl font-black text-gray-900">{formatMNT(totalAmount)}</p>
-          <p className="text-xs text-gray-500 mt-1">
-            {formatMNT(selectedLottery?.ticketPrice ?? 0)} × {qtyNum} ширхэг
-          </p>
+          <p className="text-xs text-gray-500 mt-1">{formatMNT(selectedLottery?.ticketPrice ?? 0)} × {qtyNum} ширхэг</p>
         </div>
+
+        {errors.api && (
+          <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2 mt-4 text-center">{errors.api}</p>
+        )}
       </div>
 
       <div className="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-gray-200 px-4 py-3 lg:static lg:bg-transparent lg:border-0 lg:backdrop-blur-none lg:max-w-lg lg:mx-auto lg:w-full lg:pb-8">
         <button
-          onClick={handleOpenPay}
-          className="w-full bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-black text-base uppercase tracking-widest py-4 rounded-xl transition-colors shadow-lg"
+          onClick={handleSubmit}
+          disabled={loading}
+          className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-60 active:bg-amber-700 text-white font-black text-base uppercase tracking-widest py-4 rounded-xl transition-colors shadow-lg"
         >
-          QPay-аар төлбөр хийх
+          {loading ? "Хадгалж байна..." : "Захиалга илгээх"}
         </button>
       </div>
 
-      {/* QPay Modal */}
-      <Dialog open={qpayOpen} onOpenChange={setQpayOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-center text-lg font-black uppercase tracking-wide">
-              QPay Төлбөр
-            </DialogTitle>
-            <DialogDescription className="sr-only">QPay QR кодоор төлбөр хийх</DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col items-center gap-4 py-3">
-            <div className="w-48 h-48 bg-gray-100 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-300">
-              <div className="text-center text-gray-400">
-                <QrCode className="h-16 w-16 mx-auto mb-2" />
-                <p className="text-xs font-medium">QR код</p>
-              </div>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-black text-gray-900">{formatMNT(totalAmount)}</p>
-              <p className="text-sm text-gray-500 mt-1">Шилжүүлэх дүн</p>
-            </div>
-            <p className="text-sm text-center text-gray-700 bg-amber-50 border border-amber-200 p-3 rounded-xl w-full">
-              {selectedLottery?.carBrand} {selectedLottery?.carModel} · {qtyNum} тасалбар
-              <br />
-              Төлбөр амжилттай болсны дараа доорх товчийг дарна уу.
-            </p>
-            {errors.api && (
-              <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2 w-full text-center">
-                {errors.api}
-              </p>
-            )}
-            <button
-              onClick={handlePaid}
-              disabled={loading}
-              className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white font-black text-lg py-4 rounded-xl transition-colors uppercase tracking-wide"
-            >
-              {loading ? "Хадгалж байна..." : "Төлбөр хийлээ"}
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Success Modal */}
       <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="sr-only">Амжилттай</DialogTitle>
-            <DialogDescription className="sr-only">Тасалбар амжилттай бүртгэгдлээ</DialogDescription>
+            <DialogDescription className="sr-only">Захиалга хүлээн авлаа</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-5 py-4 text-center">
             <CheckCircle2 className="h-14 w-14 text-green-500" />
             <div>
-              <p className="text-lg font-bold text-gray-900 mb-1">Төлбөр амжилттай!</p>
-              <p className="text-sm text-gray-500">{newCodes.length} тасалбар бүртгэгдлээ</p>
+              <p className="text-lg font-bold text-gray-900 mb-1">Захиалга хүлээн авлаа!</p>
+              <p className="text-sm text-gray-500">{qtyNum} тасалбарын захиалга бүртгэгдлээ</p>
             </div>
-
-            <div className="w-full rounded-xl bg-amber-50 border border-amber-200 px-4 py-4 text-center">
+            <div className="w-full rounded-xl bg-amber-50 border border-amber-200 px-4 py-4 text-left space-y-2">
+              <p className="text-sm font-bold text-gray-900">Дараагийн алхам:</p>
               <p className="text-sm text-gray-700">
-                Тасалбарын дугаарыг{" "}
-                <span className="font-semibold text-gray-900 tabular-nums">{phone}</span>{" "}
-                дугаарт СМС-ээр илгээлээ.
+                1. <span className="font-semibold">{formatMNT(totalAmount)}</span>-г <span className="font-semibold">{BANK_INFO.account}</span> ({BANK_INFO.bank}) дансанд шилжүүлнэ үү
               </p>
-              {selectedLottery?.drawDate && (
-                <p className="text-xs text-gray-500 mt-2">
-                  Сугалааны үр дүн{" "}
-                  <span className="font-medium text-gray-700">
-                    {new Date(selectedLottery.drawDate).toLocaleDateString("mn-MN")}
-                  </span>
-                  -д зарлагдана.
-                </p>
-              )}
+              <p className="text-sm text-gray-700">
+                2. Шилжүүлэг баталгаажсаны дараа тасалбарын дугаар <span className="font-semibold">{phone}</span> дугаарт илгээгдэнэ
+              </p>
             </div>
-
             <button
               onClick={() => setSuccessOpen(false)}
               className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition-colors"

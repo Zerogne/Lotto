@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
-import { sendSMS } from "@/lib/sms";
 
 export async function POST(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -9,9 +8,10 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
   const { data: tickets, error: tErr } = await db
     .from("tickets")
     .select("code, phone")
-    .eq("lottery_id", id);
+    .eq("lottery_id", id)
+    .eq("status", "paid");
   if (tErr || !tickets?.length) {
-    return NextResponse.json({ error: "No tickets found" }, { status: 400 });
+    return NextResponse.json({ error: "No paid tickets found" }, { status: 400 });
   }
 
   const winner = tickets[Math.floor(Math.random() * tickets.length)];
@@ -22,7 +22,6 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     .eq("id", id)
     .single();
 
-  // Save winner record
   const { data: winnerRecord, error: wErr } = await db
     .from("winners")
     .insert({
@@ -38,14 +37,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     .single();
   if (wErr) return NextResponse.json({ error: wErr.message }, { status: 500 });
 
-  // Mark lottery as ended
   await db.from("lotteries").update({ status: "ended" }).eq("id", id);
-
-  // Notify winner via SMS
-  await sendSMS(
-    winner.phone,
-    `Баяр хүргье! Та ${lottery?.car_name} сугалааны хожигч боллоо! Тасалбарын код: ${winner.code}. LottoMN`
-  );
 
   return NextResponse.json(winnerRecord);
 }
