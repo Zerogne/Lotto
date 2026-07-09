@@ -76,7 +76,6 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
                   <span className="font-bold text-slate-800">{formatMNT(lottery.ticketPrice)}</span>
                   <span className="text-slate-400"> /ш</span>
                 </span>
-                <span className="font-semibold text-emerald-700">{remaining.toLocaleString()} үлдсэн</span>
               </div>
 
               <div className="mb-3">
@@ -150,8 +149,7 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
               <span className="hidden h-3 w-px bg-slate-300 sm:inline" aria-hidden />
               <span className="tabular-nums">
                 <span className="font-bold text-slate-800">{formatMNT(lottery.ticketPrice)}</span>
-                <span className="font-medium text-slate-400"> /ш · </span>
-                <span className="font-semibold text-emerald-700">{remaining.toLocaleString()} үлдсэн</span>
+                <span className="font-medium text-slate-400"> /ш</span>
               </span>
             </div>
             <div className="pt-1" role="presentation">
