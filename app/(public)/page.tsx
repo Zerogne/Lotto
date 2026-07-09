@@ -54,17 +54,6 @@ export default async function LandingPage() {
 
       </div>
 
-      {/* Sticky buy button */}
-      {featured && (
-        <div className="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-gray-200 px-4 py-3 lg:hidden">
-          <Link
-            href={`/lottery/${featured.id}/purchase`}
-            className="block w-full bg-amber-500 hover:bg-amber-600 text-white font-black text-base uppercase tracking-widest py-4 rounded-xl text-center transition-colors shadow-lg"
-          >
-            Сугалаа авах
-          </Link>
-        </div>
-      )}
     </div>
   );
 }

@@ -24,7 +24,7 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
   if (featured) {
     return (
       <Link
-        href={`/lottery/${lottery.id}/purchase`}
+        href={`/lottery/${lottery.id}`}
         className="group relative block rounded-3xl border border-slate-200/90 bg-gradient-to-br from-slate-50 to-white shadow-md shadow-slate-200/50 outline-none ring-amber-400/0 transition-all hover:border-amber-300/70 hover:shadow-xl hover:ring-4 hover:ring-amber-400/20 focus-visible:ring-amber-400/30 overflow-hidden"
       >
         {/* Badge */}
@@ -54,7 +54,7 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
         {/* Content */}
         <div className="px-5 pt-4 pb-5">
           <h2 className="text-xl font-black uppercase tracking-wide text-[#162032] leading-tight mb-1">
-            <span className="text-amber-500">{lottery.carBrand}</span> {lottery.carModel}
+            <span className="">{lottery.carBrand}</span> {lottery.carModel}
           </h2>
           <p className="text-2xl font-black text-amber-600 mb-3">
             {formatMNT(lottery.prizeValue)}
