@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Pencil } from "lucide-react";
 import DrawButton from "./DrawButton";
+import DeleteLotteryButton from "./DeleteLotteryButton";
 
 export const dynamic = "force-dynamic";
 
@@ -97,6 +98,7 @@ export default async function LotteriesPage() {
                     <DrawButton lotteryId={lottery.id} lotteryName={lottery.carName} />
                   </div>
                 )}
+                <DeleteLotteryButton lotteryId={lottery.id} lotteryName={lottery.carName} />
               </div>
             </CardContent>
           </Card>
@@ -166,9 +168,7 @@ export default async function LotteriesPage() {
                           {lottery.status === "active" && (
                             <DrawButton lotteryId={lottery.id} lotteryName={lottery.carName} />
                           )}
-                          {lottery.status === "ended" && (
-                            <span className="text-xs text-gray-400">Дууссан</span>
-                          )}
+                          <DeleteLotteryButton lotteryId={lottery.id} lotteryName={lottery.carName} />
                         </div>
                       </td>
                     </tr>

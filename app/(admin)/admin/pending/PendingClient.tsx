@@ -1,7 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, UserPlus, RefreshCw, Clock } from "lucide-react";
+import { RefreshCw, UserPlus } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface PendingGroup {
   phone: string;
@@ -27,7 +39,6 @@ export default function PendingClient() {
   const [approving, setApproving] = useState<string | null>(null);
   const [approved, setApproved] = useState<string[]>([]);
 
-  // Manual add state
   const [manualPhone, setManualPhone] = useState("");
   const [manualLotteryId, setManualLotteryId] = useState("");
   const [manualQty, setManualQty] = useState("1");
@@ -87,7 +98,6 @@ export default function PendingClient() {
       setManualMsg({ text: data.error ?? "Алдаа гарлаа", ok: false });
       return;
     }
-    // Send SMS
     await fetch("/api/tickets/approve", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -103,116 +113,120 @@ export default function PendingClient() {
   return (
     <div className="space-y-6">
       {/* Manual add */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <div className="flex items-center gap-2 mb-4">
-          <UserPlus className="h-5 w-5 text-amber-500" />
-          <h2 className="font-bold text-gray-900">Гараар нэмэх</h2>
-        </div>
-        <form onSubmit={handleManualAdd} className="flex flex-wrap gap-3 items-end">
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Утасны дугаар</label>
-            <input
-              type="tel"
-              inputMode="numeric"
-              value={manualPhone}
-              onChange={(e) => setManualPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
-              placeholder="88001234"
-              className="h-10 border border-gray-200 rounded-lg px-3 text-sm font-mono w-36 focus:outline-none focus:border-amber-400"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Сугалаа</label>
-            <select
-              value={manualLotteryId}
-              onChange={(e) => setManualLotteryId(e.target.value)}
-              className="h-10 border border-gray-200 rounded-lg px-3 text-sm focus:outline-none focus:border-amber-400"
-            >
-              {lotteries.map((l) => (
-                <option key={l.id} value={l.id}>{l.car_brand} {l.car_model}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Ширхэг</label>
-            <input
-              type="number"
-              min={1}
-              max={20}
-              value={manualQty}
-              onChange={(e) => setManualQty(e.target.value)}
-              className="h-10 border border-gray-200 rounded-lg px-3 text-sm w-20 focus:outline-none focus:border-amber-400"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={manualLoading}
-            className="h-10 bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white text-sm font-bold px-4 rounded-lg"
-          >
-            {manualLoading ? "..." : "Нэмэх + SMS"}
-          </button>
-        </form>
-        {manualMsg.text && (
-          <p className={`text-xs mt-2 font-mono ${manualMsg.ok ? "text-green-600" : "text-red-500"}`}>
-            {manualMsg.text}
-          </p>
-        )}
-      </div>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <UserPlus className="h-4 w-4 text-amber-500" />
+            Гараар нэмэх
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleManualAdd} className="flex flex-wrap gap-3 items-end">
+            <div className="space-y-1.5">
+              <Label>Утасны дугаар</Label>
+              <Input
+                type="tel"
+                inputMode="numeric"
+                value={manualPhone}
+                onChange={(e) => setManualPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                placeholder="88001234"
+                className="w-36 font-mono"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Сугалаа</Label>
+              <Select value={manualLotteryId} onValueChange={setManualLotteryId}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Сугалаа сонгох" />
+                </SelectTrigger>
+                <SelectContent>
+                  {lotteries.map((l) => (
+                    <SelectItem key={l.id} value={l.id}>
+                      {l.car_brand} {l.car_model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Ширхэг</Label>
+              <Input
+                type="number"
+                min={1}
+                max={20}
+                value={manualQty}
+                onChange={(e) => setManualQty(e.target.value)}
+                className="w-20"
+              />
+            </div>
+            <Button type="submit" disabled={manualLoading} className="bg-amber-500 hover:bg-amber-600 text-white">
+              {manualLoading ? "..." : "Нэмэх + SMS"}
+            </Button>
+          </form>
+          {manualMsg.text && (
+            <p className={`text-xs mt-3 font-mono ${manualMsg.ok ? "text-green-600" : "text-red-500"}`}>
+              {manualMsg.text}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Pending list */}
-      <div className="bg-white rounded-xl border border-gray-200">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-amber-500" />
-            <h2 className="font-bold text-gray-900">
-              Хүлээгдэж буй төлбөрүүд {!loading && `(${groups.length})`}
-            </h2>
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">
+              Хүлээгдэж буй төлбөрүүд {!loading && <span className="text-gray-400 font-normal">({groups.length})</span>}
+            </CardTitle>
+            <Button variant="outline" size="sm" onClick={fetchData} disabled={loading} className="gap-2">
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+              Шинэчлэх
+            </Button>
           </div>
-          <button
-            onClick={fetchData}
-            disabled={loading}
-            className="text-gray-400 hover:text-gray-600 disabled:opacity-40"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
-        </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {error && <p className="text-red-500 text-sm px-4 py-3">{error}</p>}
 
-        {error && <p className="text-red-500 text-sm px-4 py-3">{error}</p>}
-
-        {loading ? (
-          <p className="text-center text-sm text-gray-400 py-10">Ачааллаж байна...</p>
-        ) : groups.length === 0 ? (
-          <p className="text-center text-sm text-gray-400 py-10">Хүлээгдэж буй захиалга байхгүй</p>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {groups.map((g) => {
-              const key = `${g.phone}-${g.lottery_id}`;
-              const isApproved = approved.includes(key);
-              return (
-                <div key={key} className="flex items-center justify-between px-4 py-3 gap-4">
-                  <div className="min-w-0">
-                    <p className="font-bold text-gray-900 tabular-nums text-lg">{g.phone}</p>
-                    <p className="text-xs text-gray-500">{g.lottery_name || "—"} · {g.count} тасалбар</p>
-                    <p className="text-xs text-amber-600 font-mono mt-0.5">{g.codes.join(", ")}</p>
+          {loading ? (
+            <p className="text-center text-sm text-gray-400 py-10">Ачааллаж байна...</p>
+          ) : groups.length === 0 ? (
+            <p className="text-center text-sm text-gray-400 py-10">Хүлээгдэж буй захиалга байхгүй</p>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {groups.map((g) => {
+                const key = `${g.phone}-${g.lottery_id}`;
+                const isApproved = approved.includes(key);
+                return (
+                  <div key={key} className="flex items-center justify-between px-4 py-4 gap-4">
+                    <div className="min-w-0">
+                      <p className="font-bold text-gray-900 tabular-nums text-base">{g.phone}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{g.lottery_name || "—"} · {g.count} тасалбар</p>
+                      <p className="text-xs text-amber-600 font-mono mt-1">{g.codes.join(", ")}</p>
+                    </div>
+                    {isApproved ? (
+                      <Badge variant="success" className="shrink-0">Төлөгдсөн</Badge>
+                    ) : (
+                      <Select
+                        defaultValue="pending"
+                        disabled={approving === key}
+                        onValueChange={(val) => { if (val === "paid") approve(g.phone, g.lottery_id); }}
+                      >
+                        <SelectTrigger className="w-40 shrink-0">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Хүлээгдэж байна</SelectItem>
+                          <SelectItem value="paid">Төлөгдсөн</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
-                  {isApproved ? (
-                    <span className="flex items-center gap-1 text-green-600 text-xs font-semibold shrink-0">
-                      <CheckCircle2 className="h-4 w-4" /> Илгээгдлээ
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => approve(g.phone, g.lottery_id)}
-                      disabled={approving === key}
-                      className="shrink-0 bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white text-xs font-bold px-3 py-2 rounded-lg"
-                    >
-                      {approving === key ? "..." : "Баталгаажуулах"}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
