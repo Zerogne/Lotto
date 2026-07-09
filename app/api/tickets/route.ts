@@ -65,10 +65,7 @@ export async function POST(req: NextRequest) {
     .eq("id", body.lotteryId);
 
   const codes = (data ?? []).map((t: { code: string }) => t.code);
-  const smsBody =
-    codes.length === 1
-      ? `LottoMN: Таны "${lottery.car_name}" Сугалааны дугаар: ${codes[0]}. Aztai baina!`
-      : `LottoMN: Таны "${lottery.car_name}" Сугалааны ${codes.length} дугаар: ${codes.join(", ")}.`;
+  const smsBody = `LottoMN: ${codes.join(",")}`;
   await sendSMS(body.phone, smsBody);
 
   return NextResponse.json({ tickets: data }, { status: 201 });
