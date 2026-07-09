@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 interface Props {
   endDate: string;
+  compact?: boolean;
 }
 
 interface TimeLeft {
@@ -24,7 +25,7 @@ function calcTimeLeft(endDate: string): TimeLeft {
   };
 }
 
-export default function CountdownTimer({ endDate }: Props) {
+export default function CountdownTimer({ endDate, compact = false }: Props) {
   const [time, setTime] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
@@ -41,6 +42,17 @@ export default function CountdownTimer({ endDate }: Props) {
     { label: "Мин", value: time.minutes },
     { label: "Сек", value: time.seconds },
   ];
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2 text-[13px] text-slate-500">
+        <span className="font-bold text-slate-700 tabular-nums">
+          {time.days}өд {pad(time.hours)}:{pad(time.minutes)}:{pad(time.seconds)}
+        </span>
+        <span className="text-slate-400">үлдсэн</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center gap-3 sm:gap-5">
