@@ -38,6 +38,7 @@ export default function PendingClient() {
   const [error, setError] = useState("");
   const [approving, setApproving] = useState<string | null>(null);
   const [approved, setApproved] = useState<string[]>([]);
+  const [smsError, setSmsError] = useState<string>("");
 
   const [manualPhone, setManualPhone] = useState("");
   const [manualLotteryId, setManualLotteryId] = useState("");
@@ -74,8 +75,14 @@ export default function PendingClient() {
     });
     setApproving(null);
     if (res.ok) {
+      const data = await res.json();
       setApproved((prev) => [...prev, key]);
       setGroups((prev) => prev.filter((g) => !(g.phone === phone && g.lottery_id === lotteryId)));
+      if (!data.sms?.ok) {
+        setSmsError(`SMS алдаа (${phone}): ${data.sms?.detail ?? "тодорхойгүй"}`);
+      } else {
+        setSmsError("");
+      }
     }
   }
 
@@ -186,6 +193,7 @@ export default function PendingClient() {
         </CardHeader>
         <CardContent className="p-0">
           {error && <p className="text-red-500 text-sm px-4 py-3">{error}</p>}
+          {smsError && <p className="text-red-500 text-xs px-4 py-2 bg-red-50">{smsError}</p>}
 
           {loading ? (
             <p className="text-center text-sm text-gray-400 py-10">Ачааллаж байна...</p>

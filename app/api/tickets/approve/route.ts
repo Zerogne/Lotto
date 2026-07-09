@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     .eq("lottery_id", lotteryId);
 
   const codes = tickets.map((t: { code: string }) => t.code);
-  await sendSMS(phone, `BLCK: ${codes.join(",")}`);
+  const sms = await sendSMS(phone, `BLCK: ${codes.join(",")}`);
 
-  return NextResponse.json({ approved: tickets.length });
+  return NextResponse.json({ approved: tickets.length, sms });
 }
