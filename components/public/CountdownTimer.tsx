@@ -47,7 +47,7 @@ export default function CountdownTimer({ endDate, compact = false }: Props) {
     return (
       <div className="flex items-center gap-2 text-[13px] text-slate-500">
         <span className="font-bold text-slate-700 tabular-nums">
-          {time.days}өд {pad(time.hours)}:{pad(time.minutes)}:{pad(time.seconds)}
+          {time.days}өд {pad(time.hours)}цаг
         </span>
         <span className="text-slate-400">үлдсэн</span>
       </div>

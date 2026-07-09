@@ -20,7 +20,6 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
     100,
     lottery.maxTickets > 0 ? (lottery.ticketsSold / lottery.maxTickets) * 100 : 0
   );
-  const remaining = Math.max(0, lottery.maxTickets - lottery.ticketsSold);
 
   if (featured) {
     return (
@@ -54,11 +53,8 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
 
         {/* Content */}
         <div className="px-5 pt-4 pb-5">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-amber-500 mb-0.5">
-            {lottery.carBrand}
-          </p>
           <h2 className="text-xl font-black uppercase tracking-wide text-[#162032] leading-tight mb-1">
-            {lottery.carModel} СУГАЛАА
+            <span className="text-amber-500">{lottery.carBrand}</span> {lottery.carModel}
           </h2>
           <p className="text-2xl font-black text-amber-600 mb-3">
             {formatMNT(lottery.prizeValue)}
@@ -134,15 +130,7 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
 
         {active ? (
           <>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px] text-slate-600">
-              <span className="font-semibold tabular-nums text-slate-700">
-                {lottery.ticketsSold.toLocaleString()}
-                <span className="font-medium text-slate-400">
-                  {" "}/ {lottery.maxTickets.toLocaleString()}
-                </span>
-                <span className="ml-1 font-semibold tracking-tight text-slate-700"> тасалбар</span>
-              </span>
-              <span className="hidden h-3 w-px bg-slate-300 sm:inline" aria-hidden />
+            <div className="flex items-center gap-x-3 text-[13px] text-slate-600">
               <span className="tabular-nums">
                 <span className="font-bold text-slate-800">{formatMNT(lottery.ticketPrice)}</span>
                 <span className="font-medium text-slate-400"> /ш</span>
