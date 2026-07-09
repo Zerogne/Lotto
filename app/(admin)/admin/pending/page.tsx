@@ -7,7 +7,7 @@ export default async function PendingPage() {
   const db = createAdminClient();
 
   const [{ data: tickets }, { data: lotteries }] = await Promise.all([
-    db.from("tickets").select("*").eq("status", "pending").order("created_at", { ascending: true }),
+    db.from("tickets").select("*").or("status.eq.pending,status.is.null").order("created_at", { ascending: true }),
     db.from("lotteries").select("id, car_name, car_brand, car_model, ticket_price").eq("status", "active"),
   ]);
 
