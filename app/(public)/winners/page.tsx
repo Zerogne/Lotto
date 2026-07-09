@@ -87,7 +87,7 @@ export default async function WinnersPage() {
                     {winner ? (
                       <span className="text-xs text-green-600 font-medium">Хожигч зарлагдсан</span>
                     ) : (
-                      <span className="text-xs text-gray-400">Тодоргоогүй</span>
+                      <span className="text-xs text-gray-400">Тодорхойгүй</span>
                     )}
                   </div>
                 </div>
