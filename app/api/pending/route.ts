@@ -5,7 +5,7 @@ export async function GET() {
   const db = createAdminClient();
 
   const [{ data: tickets, error }, { data: lotteries }] = await Promise.all([
-    db.from("tickets").select("*").order("created_at", { ascending: false }),
+    db.from("tickets").select("*"),
     db.from("lotteries").select("id, car_name, car_brand, car_model, ticket_price"),
   ]);
 

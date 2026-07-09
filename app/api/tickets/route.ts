@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
   const lotteryId = searchParams.get("lotteryId");
   const status = searchParams.get("status");
   const db = createAdminClient();
-  let query = db.from("tickets").select("*").order("created_at", { ascending: false });
+  let query = db.from("tickets").select("*");
   if (lotteryId) query = query.eq("lottery_id", lotteryId);
   if (status) query = query.eq("status", status);
   const { data, error } = await query;

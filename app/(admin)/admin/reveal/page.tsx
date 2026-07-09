@@ -7,7 +7,7 @@ export default async function RevealPage() {
   const db = createAdminClient();
 
   const [{ data: tickets }, { data: lotteries }] = await Promise.all([
-    db.from("tickets").select("code, phone, lottery_name, lottery_id").order("created_at", { ascending: true }),
+    db.from("tickets").select("code, phone, lottery_name, lottery_id"),
     db.from("lotteries").select("id, car_name, car_brand, car_model").order("created_at", { ascending: false }),
   ]);
 
