@@ -67,11 +67,7 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
           {active && (
             <>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600 mb-3">
-                <span className="font-semibold tabular-nums text-slate-700">
-                  {lottery.ticketsSold.toLocaleString()}
-                  <span className="font-medium text-slate-400"> / {lottery.maxTickets.toLocaleString()}</span>
-                  <span className="ml-1">тасалбар</span>
-                </span>
+                
                 <span>
                   <span className="font-bold text-slate-800">{formatMNT(lottery.ticketPrice)}</span>
                   <span className="text-slate-400"> /ш</span>
