@@ -2,12 +2,13 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import EditLotteryForm from "./EditLotteryForm";
+import { createAdminClient } from "@/lib/supabase";
 
 async function getLottery(id: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const res = await fetch(`${baseUrl}/api/lotteries/${id}`, { cache: "no-store" });
-  if (!res.ok) return null;
-  return res.json();
+  const db = createAdminClient();
+  const { data, error } = await db.from("lotteries").select("*").eq("id", id).single();
+  if (error || !data) return null;
+  return data;
 }
 
 export default async function EditLotteryPage({
