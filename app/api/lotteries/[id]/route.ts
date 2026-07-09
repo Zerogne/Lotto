@@ -18,6 +18,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (body.carBrand !== undefined) update.car_brand = body.carBrand;
   if (body.carModel !== undefined) update.car_model = body.carModel;
   if (body.carImage !== undefined) update.car_image = body.carImage;
+  if (body.carVideo !== undefined) update.car_video = body.carVideo;
   if (body.ticketPrice !== undefined) update.ticket_price = Number(body.ticketPrice);
   if (body.maxTickets !== undefined) update.max_tickets = Number(body.maxTickets);
   if (body.endDate !== undefined) update.end_date = body.endDate;

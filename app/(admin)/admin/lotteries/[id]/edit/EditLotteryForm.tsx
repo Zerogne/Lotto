@@ -6,14 +6,25 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Trash2 } from "lucide-react";
+import { CheckCircle2, Trash2, Upload, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
+async function uploadToCloudinary(file: File, type: "image" | "video"): Promise<string> {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("type", type);
+  const res = await fetch("/api/upload", { method: "POST", body: fd });
+  if (!res.ok) throw new Error("Upload failed");
+  return (await res.json()).url as string;
+}
 
 interface Lottery {
   id: string;
   car_name: string;
   car_brand: string;
   car_model: string;
+  car_image?: string;
+  car_video?: string;
   ticket_price: number;
   max_tickets: number;
   tickets_sold: number;
@@ -57,6 +68,29 @@ export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const [imagePreview, setImagePreview] = useState(lottery.car_image ?? "");
+  const [imageUrl, setImageUrl] = useState(lottery.car_image ?? "");
+  const [imageUploading, setImageUploading] = useState(false);
+  const [videoName, setVideoName] = useState(lottery.car_video ? "Одоогийн видео байна" : "");
+  const [videoUrl, setVideoUrl] = useState(lottery.car_video ?? "");
+  const [videoUploading, setVideoUploading] = useState(false);
+
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImagePreview(URL.createObjectURL(file));
+    setImageUploading(true);
+    try { setImageUrl(await uploadToCloudinary(file, "image")); } catch { /* ignore */ } finally { setImageUploading(false); }
+  }
+
+  async function handleVideoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setVideoName(file.name);
+    setVideoUploading(true);
+    try { setVideoUrl(await uploadToCloudinary(file, "video")); } catch { /* ignore */ } finally { setVideoUploading(false); }
+  }
+
   function set(field: keyof FormState) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -87,6 +121,8 @@ export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
         carName: form.carName,
         carBrand: form.carBrand,
         carModel: form.carModel,
+        carImage: imageUrl || undefined,
+        carVideo: videoUrl || undefined,
         ticketPrice: form.ticketPrice,
         maxTickets: form.maxTickets,
         endDate: form.endDate,
@@ -146,6 +182,38 @@ export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
                 className={errors.carName ? "border-red-400" : ""}
               />
               {errors.carName && <p className="text-red-500 text-xs">{errors.carName}</p>}
+            </div>
+
+            {/* Image upload */}
+            <div className="space-y-1.5">
+              <Label>Машины зураг</Label>
+              <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors overflow-hidden relative">
+                {imagePreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={imagePreview} alt="preview" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-gray-400">
+                    {imageUploading ? <Loader2 className="h-7 w-7 animate-spin text-amber-500" /> : <Upload className="h-7 w-7" />}
+                    <span className="text-sm">{imageUploading ? "Байршуулж байна..." : "Зураг солих"}</span>
+                  </div>
+                )}
+                <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+              </label>
+              {imageUploading && <p className="text-xs text-amber-500">Байршуулж байна...</p>}
+              {imageUrl && !imageUploading && <p className="text-xs text-green-600">✓ Зураг байршлаа</p>}
+            </div>
+
+            {/* Video upload */}
+            <div className="space-y-1.5">
+              <Label>Машины видео <span className="text-gray-400 font-normal">(заавал биш)</span></Label>
+              <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors">
+                <div className="flex flex-col items-center gap-1.5 text-gray-400">
+                  {videoUploading ? <Loader2 className="h-6 w-6 animate-spin text-amber-500" /> : <Upload className="h-6 w-6" />}
+                  <span className="text-sm">{videoUploading ? "Байршуулж байна..." : videoName || "Видео солих (MP4, MOV)"}</span>
+                </div>
+                <input type="file" className="hidden" accept="video/*" onChange={handleVideoChange} />
+              </label>
+              {videoUrl && !videoUploading && <p className="text-xs text-green-600">✓ Видео байршлаа</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-3">

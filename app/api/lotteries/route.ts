@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
       car_brand: body.carBrand ?? "",
       car_model: body.carModel ?? "",
       car_image: body.carImage ?? "/images/car-placeholder.svg",
+      car_video: body.carVideo ?? null,
       ticket_price: Number(body.ticketPrice),
       max_tickets: Number(body.maxTickets),
       tickets_sold: 0,

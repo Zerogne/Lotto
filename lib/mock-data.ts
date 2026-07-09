@@ -6,6 +6,7 @@ export interface Lottery {
   carBrand: string;
   carModel: string;
   carImage: string;
+  carVideo?: string;
   ticketPrice: number;
   maxTickets: number;
   ticketsSold: number;

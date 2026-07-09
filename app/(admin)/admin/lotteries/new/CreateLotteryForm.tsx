@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Upload } from "lucide-react";
+import { CheckCircle2, Upload, Loader2 } from "lucide-react";
 
 interface FormState {
   carName: string;
@@ -32,6 +32,16 @@ const emptyForm: FormState = {
   description: "",
 };
 
+async function uploadToCloudinary(file: File, type: "image" | "video"): Promise<string> {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("type", type);
+  const res = await fetch("/api/upload", { method: "POST", body: fd });
+  if (!res.ok) throw new Error("Upload failed");
+  const data = await res.json();
+  return data.url as string;
+}
+
 export default function CreateLotteryForm() {
   const router = useRouter();
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -39,13 +49,54 @@ export default function CreateLotteryForm() {
   const [apiError, setApiError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [imageName, setImageName] = useState<string | null>(null);
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
+
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoName, setVideoName] = useState("");
+  const [videoUploading, setVideoUploading] = useState(false);
+  const [videoUrl, setVideoUrl] = useState("");
 
   function set(field: keyof FormState) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     };
+  }
+
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setImageUploading(true);
+    try {
+      const url = await uploadToCloudinary(file, "image");
+      setImageUrl(url);
+    } catch {
+      setApiError("Зураг оруулахад алдаа гарлаа");
+    } finally {
+      setImageUploading(false);
+    }
+  }
+
+  async function handleVideoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setVideoFile(file);
+    setVideoName(file.name);
+    setVideoUploading(true);
+    try {
+      const url = await uploadToCloudinary(file, "video");
+      setVideoUrl(url);
+    } catch {
+      setApiError("Видео оруулахад алдаа гарлаа");
+    } finally {
+      setVideoUploading(false);
+    }
   }
 
   function validate(): boolean {
@@ -63,6 +114,10 @@ export default function CreateLotteryForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
+    if (imageUploading || videoUploading) {
+      setApiError("Файл байршуулж дуустал хүлээнэ үү");
+      return;
+    }
     setLoading(true);
     setApiError("");
     const res = await fetch("/api/lotteries", {
@@ -72,6 +127,8 @@ export default function CreateLotteryForm() {
         carName: form.carName,
         carBrand: form.carBrand,
         carModel: form.carModel,
+        carImage: imageUrl || undefined,
+        carVideo: videoUrl || undefined,
         ticketPrice: form.ticketPrice,
         maxTickets: form.maxTickets,
         endDate: form.endDate,
@@ -101,20 +158,10 @@ export default function CreateLotteryForm() {
             </p>
           </div>
           <div className="flex gap-3 w-full">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => {
-                setForm(emptyForm);
-                setSuccess(false);
-              }}
-            >
+            <Button variant="outline" className="flex-1" onClick={() => { setForm(emptyForm); setSuccess(false); setImageUrl(""); setVideoUrl(""); setImagePreview(""); setVideoName(""); }}>
               Дахин үүсгэх
             </Button>
-            <Button
-              className="flex-1 bg-amber-500 hover:bg-amber-600 text-white"
-              onClick={() => { router.push("/admin/lotteries"); router.refresh(); }}
-            >
+            <Button className="flex-1 bg-amber-500 hover:bg-amber-600 text-white" onClick={() => { router.push("/admin/lotteries"); router.refresh(); }}>
               Жагсаалт руу буцах
             </Button>
           </div>
@@ -129,116 +176,79 @@ export default function CreateLotteryForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="carName">Машины нэр</Label>
-            <Input
-              id="carName"
-              value={form.carName}
-              onChange={set("carName")}
-              placeholder="жн. Mercedes G-Class 2024"
-              className={errors.carName ? "border-red-400" : ""}
-            />
+            <Input id="carName" value={form.carName} onChange={set("carName")} placeholder="жн. Mercedes G-Class 2024" className={errors.carName ? "border-red-400" : ""} />
             {errors.carName && <p className="text-red-500 text-xs">{errors.carName}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="carBrand">Брэнд</Label>
-              <Input
-                id="carBrand"
-                value={form.carBrand}
-                onChange={set("carBrand")}
-                placeholder="MERCEDES BENZ"
-              />
+              <Input id="carBrand" value={form.carBrand} onChange={set("carBrand")} placeholder="MERCEDES BENZ" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="carModel">Модель</Label>
-              <Input
-                id="carModel"
-                value={form.carModel}
-                onChange={set("carModel")}
-                placeholder="G-CLASS"
-              />
+              <Input id="carModel" value={form.carModel} onChange={set("carModel")} placeholder="G-CLASS" />
             </div>
           </div>
 
+          {/* Image upload */}
           <div className="space-y-1.5">
             <Label>Машины зураг</Label>
-            <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors">
-              <div className="flex flex-col items-center gap-2 text-gray-400">
-                <Upload className="h-7 w-7" />
-                <span className="text-sm">{imageName ? imageName : "Зураг оруулах (JPG, PNG)"}</span>
-              </div>
-              <input
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={(e) => setImageName(e.target.files?.[0]?.name ?? null)}
-              />
+            <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors overflow-hidden relative">
+              {imagePreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={imagePreview} alt="preview" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-gray-400">
+                  {imageUploading ? <Loader2 className="h-7 w-7 animate-spin text-amber-500" /> : <Upload className="h-7 w-7" />}
+                  <span className="text-sm">{imageUploading ? "Байршуулж байна..." : "Зураг оруулах (JPG, PNG)"}</span>
+                </div>
+              )}
+              <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
             </label>
+            {imageUrl && <p className="text-xs text-green-600">✓ Зураг байршлаа</p>}
+          </div>
+
+          {/* Video upload */}
+          <div className="space-y-1.5">
+            <Label>Машины видео <span className="text-gray-400 font-normal">(заавал биш)</span></Label>
+            <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors">
+              <div className="flex flex-col items-center gap-1.5 text-gray-400">
+                {videoUploading ? <Loader2 className="h-6 w-6 animate-spin text-amber-500" /> : <Upload className="h-6 w-6" />}
+                <span className="text-sm">{videoUploading ? "Байршуулж байна..." : videoName || "Видео оруулах (MP4, MOV)"}</span>
+              </div>
+              <input type="file" className="hidden" accept="video/*" onChange={handleVideoChange} />
+            </label>
+            {videoUrl && <p className="text-xs text-green-600">✓ Видео байршлаа</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="ticketPrice">Тасалбарын үнэ (₮)</Label>
-              <Input
-                id="ticketPrice"
-                type="number"
-                inputMode="numeric"
-                value={form.ticketPrice}
-                onChange={set("ticketPrice")}
-                placeholder="50000"
-                className={errors.ticketPrice ? "border-red-400" : ""}
-              />
+              <Input id="ticketPrice" type="number" inputMode="numeric" value={form.ticketPrice} onChange={set("ticketPrice")} placeholder="50000" className={errors.ticketPrice ? "border-red-400" : ""} />
               {errors.ticketPrice && <p className="text-red-500 text-xs">{errors.ticketPrice}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="maxTickets">Нийт тасалбар</Label>
-              <Input
-                id="maxTickets"
-                type="number"
-                inputMode="numeric"
-                value={form.maxTickets}
-                onChange={set("maxTickets")}
-                placeholder="500"
-                className={errors.maxTickets ? "border-red-400" : ""}
-              />
+              <Input id="maxTickets" type="number" inputMode="numeric" value={form.maxTickets} onChange={set("maxTickets")} placeholder="500" className={errors.maxTickets ? "border-red-400" : ""} />
               {errors.maxTickets && <p className="text-red-500 text-xs">{errors.maxTickets}</p>}
             </div>
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="prizeValue">Шагналын үнэ цэнэ (₮)</Label>
-            <Input
-              id="prizeValue"
-              type="number"
-              inputMode="numeric"
-              value={form.prizeValue}
-              onChange={set("prizeValue")}
-              placeholder="180000000"
-            />
+            <Input id="prizeValue" type="number" inputMode="numeric" value={form.prizeValue} onChange={set("prizeValue")} placeholder="180000000" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="endDate">Дуусах огноо</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={form.endDate}
-                onChange={set("endDate")}
-                min={new Date().toISOString().split("T")[0]}
-                className={errors.endDate ? "border-red-400" : ""}
-              />
+              <Input id="endDate" type="date" value={form.endDate} onChange={set("endDate")} min={new Date().toISOString().split("T")[0]} className={errors.endDate ? "border-red-400" : ""} />
               {errors.endDate && <p className="text-red-500 text-xs">{errors.endDate}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="drawDate">Сугалааны огноо</Label>
-              <Input
-                id="drawDate"
-                type="date"
-                value={form.drawDate}
-                onChange={set("drawDate")}
-                min={new Date().toISOString().split("T")[0]}
-              />
+              <Input id="drawDate" type="date" value={form.drawDate} onChange={set("drawDate")} min={new Date().toISOString().split("T")[0]} />
             </div>
           </div>
 
@@ -254,24 +264,13 @@ export default function CreateLotteryForm() {
             />
           </div>
 
-          {apiError && (
-            <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2">{apiError}</p>
-          )}
+          {apiError && <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2">{apiError}</p>}
 
           <div className="flex gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => router.push("/admin/lotteries")}
-            >
+            <Button type="button" variant="outline" className="flex-1" onClick={() => router.push("/admin/lotteries")}>
               Цуцлах
             </Button>
-            <Button
-              type="submit"
-              className="flex-1 bg-amber-500 hover:bg-amber-600 text-white"
-              disabled={loading}
-            >
+            <Button type="submit" className="flex-1 bg-amber-500 hover:bg-amber-600 text-white" disabled={loading || imageUploading || videoUploading}>
               {loading ? "Үүсгэж байна..." : "Үүсгэх"}
             </Button>
           </div>
