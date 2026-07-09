@@ -1,39 +1,39 @@
-const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID ?? "";
-const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN ?? "";
-const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER ?? "";
+const EASYSENDSMS_API_KEY = process.env.EASYSENDSMS_API_KEY ?? "";
 
 export async function sendSMS(phone: string, message: string): Promise<void> {
-  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+  if (!EASYSENDSMS_API_KEY) {
     console.log(`[SMS mock] To: ${phone} | ${message}`);
     return;
   }
 
-  // Mongolian numbers need +976 prefix
-  const to = phone.startsWith("+") ? phone : `+976${phone}`;
-
-  const body = new URLSearchParams({
-    From: TWILIO_PHONE_NUMBER,
-    To: to,
-    Body: message,
-  });
+  // EasySendSMS wants number without + or 00, just country code + number
+  const to = phone.startsWith("+")
+    ? phone.slice(1)
+    : phone.startsWith("00")
+    ? phone.slice(2)
+    : `976${phone}`;
 
   try {
-    const res = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Basic ${Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString("base64")}`,
-        },
-        body: body.toString(),
-      }
-    );
-    if (!res.ok) {
-      const text = await res.text();
-      console.error(`[Twilio] error ${res.status}:`, text);
+    const res = await fetch("https://restapi.easysendsms.app/v1/rest/sms/send", {
+      method: "POST",
+      headers: {
+        apikey: EASYSENDSMS_API_KEY,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        from: "LottoMN",
+        to,
+        text: message,
+        type: "0",
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      console.error("[EasySendSMS] error:", data);
     }
   } catch (err) {
-    console.error("[Twilio] failed:", err);
+    console.error("[EasySendSMS] failed:", err);
   }
 }
