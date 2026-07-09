@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   const quantity = Number(body.quantity ?? 1);
   const tickets = [];
   for (let i = 0; i < quantity; i++) {
-    const ticketCode = String(Math.floor(100000 + Math.random() * 900000));
+    const ticketCode = String(Math.floor(10000 + Math.random() * 90000));
     tickets.push({
       code: ticketCode,
       phone: body.phone,
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     .eq("id", body.lotteryId);
 
   const codes = (data ?? []).map((t: { code: string }) => t.code);
-  const smsBody = `LottoMN: ${codes.join(",")}`;
+  const smsBody = `BLCK: ${codes.join(",")}`;
   await sendSMS(body.phone, smsBody);
 
   return NextResponse.json({ tickets: data }, { status: 201 });

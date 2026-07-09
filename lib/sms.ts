@@ -22,7 +22,7 @@ export async function sendSMS(phone: string, message: string): Promise<void> {
         Accept: "application/json",
       },
       body: JSON.stringify({
-        from: "LottoMN",
+        from: "BLCK",
         to,
         text: message,
         type: "0",
