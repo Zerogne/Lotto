@@ -93,7 +93,6 @@ export default async function LotteryDetailPage({
         {active && (
           <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4">
             <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
-              <span>{lottery.ticketsSold.toLocaleString()} тасалбар зарагдсан</span>
               <span className="text-amber-600">{Math.round(pct)}%</span>
             </div>
             <div className="h-3 overflow-hidden rounded-full bg-slate-200">
@@ -102,7 +101,6 @@ export default async function LotteryDetailPage({
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <p className="text-xs text-slate-400 mt-1.5">{remaining.toLocaleString()} тасалбар үлдсэн</p>
           </div>
         )}
 
