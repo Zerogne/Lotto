@@ -99,9 +99,7 @@ export default function TicketCheckSection({
       <div className="flex flex-1 flex-col lg:mx-auto lg:w-full lg:max-w-lg">
         <div className="mx-auto w-full max-w-lg flex-1 px-4 pt-4 pb-6 lg:pb-8">
           <form onSubmit={handleSubmit} className="w-full">
-            <h1 className="text-2xl font-black uppercase tracking-wide text-[#162032] leading-tight">
-              Сугалаа шалгах
-            </h1>
+            
             <div className="mb-4">
               <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                 Утасны дугаар
