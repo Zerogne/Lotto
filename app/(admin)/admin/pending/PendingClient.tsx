@@ -26,8 +26,6 @@ interface PendingGroup {
 interface Lottery {
   id: string;
   car_name: string;
-  car_brand: string;
-  car_model: string;
   ticket_price: number;
 }
 
@@ -158,7 +156,7 @@ export default function PendingClient() {
                 <SelectContent>
                   {lotteries.map((l) => (
                     <SelectItem key={l.id} value={l.id}>
-                      {l.car_brand} {l.car_model}
+                      {l.car_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
