@@ -58,7 +58,6 @@ export default async function LotteryDetailPage({
           <h1 className="text-2xl font-black uppercase tracking-wide text-[#162032] leading-tight">
             <span className="text-amber-500">{lottery.carBrand}</span> {lottery.carModel}
           </h1>
-          <p className="text-3xl font-black text-amber-600 mt-1">{formatMNT(lottery.prizeValue)}</p>
         </div>
 
         {/* Stats */}

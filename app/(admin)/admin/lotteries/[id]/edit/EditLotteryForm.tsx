@@ -10,12 +10,27 @@ import { CheckCircle2, Trash2, Upload, Loader2, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 async function uploadToCloudinary(file: File, type: "image" | "video"): Promise<string> {
+  const signRes = await fetch("/api/upload/sign", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type }),
+  });
+  if (!signRes.ok) throw new Error("Sign failed");
+  const { signature, timestamp, folder, apiKey, cloudName, resourceType } = await signRes.json();
+
   const fd = new FormData();
   fd.append("file", file);
-  fd.append("type", type);
-  const res = await fetch("/api/upload", { method: "POST", body: fd });
-  if (!res.ok) throw new Error("Upload failed");
-  return (await res.json()).url as string;
+  fd.append("api_key", apiKey);
+  fd.append("timestamp", String(timestamp));
+  fd.append("signature", signature);
+  fd.append("folder", folder);
+
+  const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
+    method: "POST",
+    body: fd,
+  });
+  if (!uploadRes.ok) throw new Error("Upload failed");
+  return (await uploadRes.json()).secure_url as string;
 }
 
 interface Lottery {
@@ -38,12 +53,9 @@ interface Lottery {
 
 interface FormState {
   carName: string;
-  carBrand: string;
-  carModel: string;
   ticketPrice: string;
   maxTickets: string;
   endDate: string;
-  drawDate: string;
   status: string;
   description: string;
   prizeValue: string;
@@ -53,12 +65,9 @@ export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
   const router = useRouter();
   const [form, setForm] = useState<FormState>({
     carName: lottery.car_name,
-    carBrand: lottery.car_brand,
-    carModel: lottery.car_model,
     ticketPrice: String(lottery.ticket_price),
     maxTickets: String(lottery.max_tickets),
     endDate: lottery.end_date,
-    drawDate: lottery.draw_date,
     status: lottery.status,
     description: lottery.description ?? "",
     prizeValue: String(lottery.prize_value ?? 0),
@@ -153,14 +162,11 @@ export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         carName: form.carName,
-        carBrand: form.carBrand,
-        carModel: form.carModel,
         carImages: imageUrls,
         carVideo: videoUrl || undefined,
         ticketPrice: form.ticketPrice,
         maxTickets: form.maxTickets,
         endDate: form.endDate,
-        drawDate: form.drawDate,
         status: form.status,
         description: form.description,
         prizeValue: form.prizeValue,
@@ -264,17 +270,6 @@ export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="carBrand">Брэнд</Label>
-                <Input id="carBrand" value={form.carBrand} onChange={set("carBrand")} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="carModel">Модель</Label>
-                <Input id="carModel" value={form.carModel} onChange={set("carModel")} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
                 <Label htmlFor="ticketPrice">Тасалбарын үнэ (₮)</Label>
                 <Input
                   id="ticketPrice"
@@ -315,27 +310,16 @@ export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="endDate">Дуусах огноо</Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={form.endDate}
-                  onChange={set("endDate")}
-                  className={errors.endDate ? "border-red-400" : ""}
-                />
-                {errors.endDate && <p className="text-red-500 text-xs">{errors.endDate}</p>}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="drawDate">Сугалааны огноо</Label>
-                <Input
-                  id="drawDate"
-                  type="date"
-                  value={form.drawDate}
-                  onChange={set("drawDate")}
-                />
-              </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="endDate">Дуусах огноо</Label>
+              <Input
+                id="endDate"
+                type="date"
+                value={form.endDate}
+                onChange={set("endDate")}
+                className={errors.endDate ? "border-red-400" : ""}
+              />
+              {errors.endDate && <p className="text-red-500 text-xs">{errors.endDate}</p>}
             </div>
 
             <div className="space-y-1.5">

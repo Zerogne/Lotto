@@ -27,13 +27,28 @@ const emptyForm: FormState = {
 };
 
 async function uploadToCloudinary(file: File, type: "image" | "video"): Promise<string> {
+  const signRes = await fetch("/api/upload/sign", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type }),
+  });
+  if (!signRes.ok) throw new Error("Sign failed");
+  const { signature, timestamp, folder, apiKey, cloudName, resourceType } = await signRes.json();
+
   const fd = new FormData();
   fd.append("file", file);
-  fd.append("type", type);
-  const res = await fetch("/api/upload", { method: "POST", body: fd });
-  if (!res.ok) throw new Error("Upload failed");
-  const data = await res.json();
-  return data.url as string;
+  fd.append("api_key", apiKey);
+  fd.append("timestamp", String(timestamp));
+  fd.append("signature", signature);
+  fd.append("folder", folder);
+
+  const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
+    method: "POST",
+    body: fd,
+  });
+  if (!uploadRes.ok) throw new Error("Upload failed");
+  const data = await uploadRes.json();
+  return data.secure_url as string;
 }
 
 export default function CreateLotteryForm() {
