@@ -5,6 +5,7 @@ create table if not exists lotteries (
   car_brand    text default '',
   car_model    text default '',
   car_image    text default '/images/car-placeholder.svg',
+  car_images   text[] default '{}',
   ticket_price integer not null,
   max_tickets  integer not null,
   tickets_sold integer default 0,
@@ -37,6 +38,8 @@ create table if not exists winners (
   prize_value  bigint default 0,
   created_at   timestamptz default now()
 );
+
+alter table lotteries add column if not exists car_images text[] default '{}';
 
 alter table lotteries disable row level security;
 alter table tickets   disable row level security;

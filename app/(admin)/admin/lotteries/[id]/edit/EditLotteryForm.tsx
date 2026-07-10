@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Trash2, Upload, Loader2 } from "lucide-react";
+import { CheckCircle2, Trash2, Upload, Loader2, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 async function uploadToCloudinary(file: File, type: "image" | "video"): Promise<string> {
@@ -24,6 +24,7 @@ interface Lottery {
   car_brand: string;
   car_model: string;
   car_image?: string;
+  car_images?: string[];
   car_video?: string;
   ticket_price: number;
   max_tickets: number;
@@ -68,19 +69,52 @@ export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const [imagePreview, setImagePreview] = useState(lottery.car_image ?? "");
-  const [imageUrl, setImageUrl] = useState(lottery.car_image ?? "");
-  const [imageUploading, setImageUploading] = useState(false);
+  interface ImageItem {
+    id: string;
+    preview: string;
+    url: string;
+    uploading: boolean;
+  }
+  const initialImages: string[] = lottery.car_images?.length
+    ? lottery.car_images
+    : lottery.car_image
+    ? [lottery.car_image]
+    : [];
+  const [images, setImages] = useState<ImageItem[]>(
+    initialImages.map((url, i) => ({ id: `existing-${i}`, preview: url, url, uploading: false }))
+  );
+  const imageUploading = images.some((img) => img.uploading);
+  const imageUrls = images.map((img) => img.url).filter(Boolean);
   const [videoName, setVideoName] = useState(lottery.car_video ? "Одоогийн видео байна" : "");
   const [videoUrl, setVideoUrl] = useState(lottery.car_video ?? "");
   const [videoUploading, setVideoUploading] = useState(false);
 
-  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImagePreview(URL.createObjectURL(file));
-    setImageUploading(true);
-    try { setImageUrl(await uploadToCloudinary(file, "image")); } catch { /* ignore */ } finally { setImageUploading(false); }
+  async function handleImagesChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    e.target.value = "";
+    const newItems: ImageItem[] = files.map((file) => ({
+      id: `${Date.now()}-${Math.random()}`,
+      preview: URL.createObjectURL(file),
+      url: "",
+      uploading: true,
+    }));
+    setImages((prev) => [...prev, ...newItems]);
+    await Promise.all(
+      files.map(async (file, i) => {
+        const id = newItems[i].id;
+        try {
+          const url = await uploadToCloudinary(file, "image");
+          setImages((prev) => prev.map((img) => (img.id === id ? { ...img, url, uploading: false } : img)));
+        } catch {
+          setImages((prev) => prev.filter((img) => img.id !== id));
+        }
+      })
+    );
+  }
+
+  function removeImage(id: string) {
+    setImages((prev) => prev.filter((img) => img.id !== id));
   }
 
   async function handleVideoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -121,7 +155,7 @@ export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
         carName: form.carName,
         carBrand: form.carBrand,
         carModel: form.carModel,
-        carImage: imageUrl || undefined,
+        carImages: imageUrls,
         carVideo: videoUrl || undefined,
         ticketPrice: form.ticketPrice,
         maxTickets: form.maxTickets,
@@ -186,21 +220,33 @@ export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
 
             {/* Image upload */}
             <div className="space-y-1.5">
-              <Label>Машины зураг</Label>
-              <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors overflow-hidden relative">
-                {imagePreview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={imagePreview} alt="preview" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex flex-col items-center gap-2 text-gray-400">
-                    {imageUploading ? <Loader2 className="h-7 w-7 animate-spin text-amber-500" /> : <Upload className="h-7 w-7" />}
-                    <span className="text-sm">{imageUploading ? "Байршуулж байна..." : "Зураг солих"}</span>
+              <Label>Машины зураг <span className="text-gray-400 font-normal">(олон зураг оруулж болно)</span></Label>
+              <div className="grid grid-cols-3 gap-2">
+                {images.map((img) => (
+                  <div key={img.id} className="relative h-24 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img.preview} alt="preview" className="h-full w-full object-cover" />
+                    {img.uploading && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                        <Loader2 className="h-5 w-5 animate-spin text-white" />
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeImage(img.id)}
+                      className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
                   </div>
-                )}
-                <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
-              </label>
-              {imageUploading && <p className="text-xs text-amber-500">Байршуулж байна...</p>}
-              {imageUrl && !imageUploading && <p className="text-xs text-green-600">✓ Зураг байршлаа</p>}
+                ))}
+                <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors text-gray-400">
+                  <Upload className="h-6 w-6" />
+                  <span className="text-xs mt-1">Зураг нэмэх</span>
+                  <input type="file" className="hidden" accept="image/*" multiple onChange={handleImagesChange} />
+                </label>
+              </div>
+              {imageUrls.length > 0 && <p className="text-xs text-green-600">✓ {imageUrls.length} зураг байршлаа</p>}
             </div>
 
             {/* Video upload */}

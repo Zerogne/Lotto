@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Upload, Loader2 } from "lucide-react";
+import { CheckCircle2, Upload, Loader2, X } from "lucide-react";
 
 interface FormState {
   carName: string;
@@ -44,10 +44,15 @@ export default function CreateLotteryForm() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
-  const [imageUploading, setImageUploading] = useState(false);
-  const [imageUrl, setImageUrl] = useState("");
+  interface ImageItem {
+    id: string;
+    preview: string;
+    url: string;
+    uploading: boolean;
+  }
+  const [images, setImages] = useState<ImageItem[]>([]);
+  const imageUploading = images.some((img) => img.uploading);
+  const imageUrls = images.map((img) => img.url).filter(Boolean);
 
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoName, setVideoName] = useState("");
@@ -61,20 +66,33 @@ export default function CreateLotteryForm() {
     };
   }
 
-  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
-    setImageUploading(true);
-    try {
-      const url = await uploadToCloudinary(file, "image");
-      setImageUrl(url);
-    } catch {
-      setApiError("Зураг оруулахад алдаа гарлаа");
-    } finally {
-      setImageUploading(false);
-    }
+  async function handleImagesChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    e.target.value = "";
+    const newItems: ImageItem[] = files.map((file) => ({
+      id: `${Date.now()}-${Math.random()}`,
+      preview: URL.createObjectURL(file),
+      url: "",
+      uploading: true,
+    }));
+    setImages((prev) => [...prev, ...newItems]);
+    await Promise.all(
+      files.map(async (file, i) => {
+        const id = newItems[i].id;
+        try {
+          const url = await uploadToCloudinary(file, "image");
+          setImages((prev) => prev.map((img) => (img.id === id ? { ...img, url, uploading: false } : img)));
+        } catch {
+          setApiError("Зураг оруулахад алдаа гарлаа");
+          setImages((prev) => prev.filter((img) => img.id !== id));
+        }
+      })
+    );
+  }
+
+  function removeImage(id: string) {
+    setImages((prev) => prev.filter((img) => img.id !== id));
   }
 
   async function handleVideoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -119,7 +137,7 @@ export default function CreateLotteryForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         carName: form.carName,
-        carImage: imageUrl || undefined,
+        carImages: imageUrls,
         carVideo: videoUrl || undefined,
         ticketPrice: form.ticketPrice,
         maxTickets: form.maxTickets,
@@ -150,7 +168,7 @@ export default function CreateLotteryForm() {
             </p>
           </div>
           <div className="flex gap-3 w-full">
-            <Button variant="outline" className="flex-1" onClick={() => { setForm(emptyForm); setSuccess(false); setImageUrl(""); setVideoUrl(""); setImagePreview(""); setVideoName(""); }}>
+            <Button variant="outline" className="flex-1" onClick={() => { setForm(emptyForm); setSuccess(false); setImages([]); setVideoUrl(""); setVideoName(""); }}>
               Дахин үүсгэх
             </Button>
             <Button className="flex-1 bg-amber-500 hover:bg-amber-600 text-white" onClick={() => { router.push("/admin/lotteries"); router.refresh(); }}>
@@ -174,20 +192,33 @@ export default function CreateLotteryForm() {
 
           {/* Image upload */}
           <div className="space-y-1.5">
-            <Label>Машины зураг</Label>
-            <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors overflow-hidden relative">
-              {imagePreview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={imagePreview} alt="preview" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex flex-col items-center gap-2 text-gray-400">
-                  {imageUploading ? <Loader2 className="h-7 w-7 animate-spin text-amber-500" /> : <Upload className="h-7 w-7" />}
-                  <span className="text-sm">{imageUploading ? "Байршуулж байна..." : "Зураг оруулах (JPG, PNG)"}</span>
+            <Label>Машины зураг <span className="text-gray-400 font-normal">(олон зураг оруулж болно)</span></Label>
+            <div className="grid grid-cols-3 gap-2">
+              {images.map((img) => (
+                <div key={img.id} className="relative h-24 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img.preview} alt="preview" className="h-full w-full object-cover" />
+                  {img.uploading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                      <Loader2 className="h-5 w-5 animate-spin text-white" />
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeImage(img.id)}
+                    className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </div>
-              )}
-              <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
-            </label>
-            {imageUrl && <p className="text-xs text-green-600">✓ Зураг байршлаа</p>}
+              ))}
+              <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors text-gray-400">
+                <Upload className="h-6 w-6" />
+                <span className="text-xs mt-1">Зураг нэмэх</span>
+                <input type="file" className="hidden" accept="image/*" multiple onChange={handleImagesChange} />
+              </label>
+            </div>
+            {imageUrls.length > 0 && <p className="text-xs text-green-600">✓ {imageUrls.length} зураг байршлаа</p>}
           </div>
 
           {/* Video upload */}

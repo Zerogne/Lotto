@@ -6,6 +6,7 @@ create table if not exists lotteries (
   car_brand    text,
   car_model    text,
   car_image    text default '/images/car-placeholder.svg',
+  car_images   text[] default '{}',
   ticket_price integer not null,
   max_tickets  integer not null,
   tickets_sold integer default 0,

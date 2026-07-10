@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { getLotteryById } from "@/lib/db";
 import { formatMNT } from "@/lib/mock-data";
 import CountdownTimer from "@/components/public/CountdownTimer";
+import LotteryImageGallery from "@/components/public/LotteryImageGallery";
 import { ChevronLeft, Ticket, Trophy, CalendarDays } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -37,21 +37,13 @@ export default async function LotteryDetailPage({
       </div>
 
       {/* Car image */}
-      <div className="relative w-full h-64 sm:h-80 bg-gradient-to-br from-slate-800 to-[#0c1222] mt-2">
-        {lottery.carImage && lottery.carImage !== "/images/car-placeholder.svg" ? (
-          <Image
-            src={lottery.carImage}
-            alt={`${lottery.carBrand} ${lottery.carModel}`}
-            fill
-            sizes="100vw"
-            className="object-cover object-center"
-            priority
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-7xl select-none">🚗</div>
-        )}
+      <div className="relative mt-2">
+        <LotteryImageGallery
+          images={lottery.carImages.filter((src) => src !== "/images/car-placeholder.svg")}
+          alt={`${lottery.carBrand} ${lottery.carModel}`}
+        />
         {active && (
-          <div className="absolute top-4 left-4">
+          <div className="absolute top-4 left-4 z-10">
             <span className="inline-block bg-amber-500 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow">
               Идэвхтэй сугалаа
             </span>

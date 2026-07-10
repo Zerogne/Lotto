@@ -9,6 +9,7 @@ function mapLottery(r: any): Lottery {
     carBrand: r.car_brand ?? "",
     carModel: r.car_model ?? "",
     carImage: r.car_image ?? "/images/car-placeholder.svg",
+    carImages: r.car_images?.length ? r.car_images : r.car_image ? [r.car_image] : [],
     carVideo: r.car_video ?? undefined,
     ticketPrice: r.ticket_price,
     maxTickets: r.max_tickets,

@@ -6,6 +6,7 @@ export interface Lottery {
   carBrand: string;
   carModel: string;
   carImage: string;
+  carImages: string[];
   carVideo?: string;
   ticketPrice: number;
   maxTickets: number;
@@ -43,6 +44,7 @@ export const LOTTERIES: Lottery[] = [
     carBrand: "MERCEDES BENZ",
     carModel: "G-CLASS",
     carImage: "/images/car-placeholder.svg",
+    carImages: ["/images/car-placeholder.svg"],
     ticketPrice: 50000,
     maxTickets: 500,
     ticketsSold: 347,
@@ -59,6 +61,7 @@ export const LOTTERIES: Lottery[] = [
     carBrand: "BMW",
     carModel: "X7",
     carImage: "/images/car-placeholder.svg",
+    carImages: ["/images/car-placeholder.svg"],
     ticketPrice: 30000,
     maxTickets: 800,
     ticketsSold: 512,
@@ -75,6 +78,7 @@ export const LOTTERIES: Lottery[] = [
     carBrand: "LEXUS",
     carModel: "LX 600",
     carImage: "/images/car-placeholder.svg",
+    carImages: ["/images/car-placeholder.svg"],
     ticketPrice: 20000,
     maxTickets: 1000,
     ticketsSold: 1000,
