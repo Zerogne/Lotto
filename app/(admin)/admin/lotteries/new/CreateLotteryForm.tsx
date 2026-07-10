@@ -10,24 +10,18 @@ import { CheckCircle2, Upload, Loader2 } from "lucide-react";
 
 interface FormState {
   carName: string;
-  carBrand: string;
-  carModel: string;
   ticketPrice: string;
   maxTickets: string;
   endDate: string;
-  drawDate: string;
   prizeValue: string;
   description: string;
 }
 
 const emptyForm: FormState = {
   carName: "",
-  carBrand: "",
-  carModel: "",
   ticketPrice: "",
   maxTickets: "",
   endDate: "",
-  drawDate: "",
   prizeValue: "",
   description: "",
 };
@@ -125,14 +119,12 @@ export default function CreateLotteryForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         carName: form.carName,
-        carBrand: form.carBrand,
-        carModel: form.carModel,
         carImage: imageUrl || undefined,
         carVideo: videoUrl || undefined,
         ticketPrice: form.ticketPrice,
         maxTickets: form.maxTickets,
         endDate: form.endDate,
-        drawDate: form.drawDate || form.endDate,
+        drawDate: form.endDate,
         prizeValue: form.prizeValue || "0",
         description: form.description,
       }),
@@ -178,17 +170,6 @@ export default function CreateLotteryForm() {
             <Label htmlFor="carName">Машины нэр</Label>
             <Input id="carName" value={form.carName} onChange={set("carName")} placeholder="жн. Mercedes G-Class 2024" className={errors.carName ? "border-red-400" : ""} />
             {errors.carName && <p className="text-red-500 text-xs">{errors.carName}</p>}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="carBrand">Брэнд</Label>
-              <Input id="carBrand" value={form.carBrand} onChange={set("carBrand")} placeholder="MERCEDES BENZ" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="carModel">Модель</Label>
-              <Input id="carModel" value={form.carModel} onChange={set("carModel")} placeholder="G-CLASS" />
-            </div>
           </div>
 
           {/* Image upload */}
@@ -240,16 +221,10 @@ export default function CreateLotteryForm() {
             <Input id="prizeValue" type="number" inputMode="numeric" value={form.prizeValue} onChange={set("prizeValue")} placeholder="180000000" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="endDate">Дуусах огноо</Label>
-              <Input id="endDate" type="date" value={form.endDate} onChange={set("endDate")} min={new Date().toISOString().split("T")[0]} className={errors.endDate ? "border-red-400" : ""} />
-              {errors.endDate && <p className="text-red-500 text-xs">{errors.endDate}</p>}
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="drawDate">Сугалааны огноо</Label>
-              <Input id="drawDate" type="date" value={form.drawDate} onChange={set("drawDate")} min={new Date().toISOString().split("T")[0]} />
-            </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="endDate">Дуусах огноо</Label>
+            <Input id="endDate" type="date" value={form.endDate} onChange={set("endDate")} min={new Date().toISOString().split("T")[0]} className={errors.endDate ? "border-red-400" : ""} />
+            {errors.endDate && <p className="text-red-500 text-xs">{errors.endDate}</p>}
           </div>
 
           <div className="space-y-1.5">
