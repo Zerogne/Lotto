@@ -102,9 +102,15 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
               <span className="text-gray-500">Хүлээн авагч</span>
               <span className="font-semibold text-gray-900">{BANK_INFO.name}</span>
             </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Гүйлгээний утга</span>
+              <span className="font-semibold text-gray-900 tabular-nums">
+                {phone.length === 8 ? phone : "Утасны дугаар"}
+              </span>
+            </div>
           </div>
           <p className="text-xs text-amber-700 mt-2">
-            Шилжүүлэг хийсний дараа таны утасны дугаарт тасалбарын код илгээгдэнэ.
+            Гүйлгээний утганд заавал утасны дугаараа бичнэ үү — эс бөгөөс тасалбар баталгаажихгүй.
           </p>
         </div>
 
@@ -198,7 +204,10 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
                 1. <span className="font-semibold">{formatMNT(totalAmount)}</span>-г <span className="font-semibold">{BANK_INFO.account}</span> ({BANK_INFO.bank}) дансанд шилжүүлнэ үү
               </p>
               <p className="text-sm text-gray-700">
-                2. Шилжүүлэг баталгаажсаны дараа тасалбарын дугаар <span className="font-semibold">{phone}</span> дугаарт илгээгдэнэ
+                2. Гүйлгээний утганд заавал <span className="font-semibold">{phone}</span> дугаараа бичнэ үү
+              </p>
+              <p className="text-sm text-gray-700">
+                3. Шилжүүлэг баталгаажсаны дараа тасалбарын дугаар <span className="font-semibold">{phone}</span> дугаарт илгээгдэнэ
               </p>
             </div>
             <button

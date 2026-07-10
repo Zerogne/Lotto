@@ -40,6 +40,7 @@ export default async function LotteryDetailPage({
       <div className="relative mt-2">
         <LotteryImageGallery
           images={lottery.carImages.filter((src) => src !== "/images/car-placeholder.svg")}
+          video={lottery.carVideo}
           alt={`${lottery.carBrand} ${lottery.carModel}`}
         />
         {active && (
@@ -99,19 +100,6 @@ export default async function LotteryDetailPage({
           <div className="rounded-2xl bg-[#0c1222] p-5 flex flex-col items-center gap-3">
             <p className="text-white/50 text-xs uppercase tracking-widest font-semibold">Дуусах хугацаа</p>
             <CountdownTimer endDate={lottery.endDate} />
-          </div>
-        )}
-
-        {/* Video */}
-        {lottery.carVideo && (
-          <div>
-            <h2 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-2">Видео</h2>
-            <video
-              src={lottery.carVideo}
-              controls
-              playsInline
-              className="w-full rounded-2xl overflow-hidden bg-black aspect-video"
-            />
           </div>
         )}
 
