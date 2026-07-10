@@ -158,7 +158,11 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
             min={1}
             max={20}
             value={quantity}
-            onChange={(e) => { setQuantity(e.target.value); setErrors((p) => ({ ...p, quantity: undefined })); }}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/\D/g, "");
+              setQuantity(digits === "" ? "" : String(Math.min(20, Number.parseInt(digits, 10))));
+              setErrors((p) => ({ ...p, quantity: undefined }));
+            }}
             onBlur={() => setQuantity(String(Math.min(20, Math.max(1, Number.parseInt(quantity, 10) || 1))))}
             className="w-full h-12 border-2 border-gray-200 rounded-lg px-4 text-lg font-bold tabular-nums focus:outline-none focus:border-amber-400"
           />

@@ -23,6 +23,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const quantity = Number(body.quantity ?? 1);
+  const MAX_QUANTITY_PER_PURCHASE = 20; // keeps a single SMS (one message's worth of codes) under the character limit
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_QUANTITY_PER_PURCHASE) {
+    return NextResponse.json({ error: `Нэг удаад 1-${MAX_QUANTITY_PER_PURCHASE} тасалбар авах боломжтой` }, { status: 400 });
+  }
+
   const db = createAdminClient();
 
   const { data: lottery } = await db
@@ -34,8 +40,6 @@ export async function POST(req: NextRequest) {
   if (!lottery) return NextResponse.json({ error: "Lottery not found" }, { status: 404 });
   if (lottery.tickets_sold >= lottery.max_tickets)
     return NextResponse.json({ error: "Sold out" }, { status: 400 });
-
-  const quantity = Number(body.quantity ?? 1);
 
   const tickets = [];
   for (let i = 0; i < quantity; i++) {

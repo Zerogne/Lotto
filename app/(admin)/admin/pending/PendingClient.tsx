@@ -169,7 +169,11 @@ export default function PendingClient() {
                 min={1}
                 max={20}
                 value={manualQty}
-                onChange={(e) => setManualQty(e.target.value)}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, "");
+                  setManualQty(digits === "" ? "" : String(Math.min(20, Number.parseInt(digits, 10))));
+                }}
+                onBlur={() => setManualQty(String(Math.min(20, Math.max(1, Number.parseInt(manualQty, 10) || 1))))}
                 className="w-20"
               />
             </div>
