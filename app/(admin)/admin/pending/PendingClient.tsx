@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { RefreshCw, UserPlus, Send } from "lucide-react";
+import { RefreshCw, UserPlus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,10 +40,6 @@ export default function PendingClient() {
   const [approved, setApproved] = useState<string[]>([]);
   const [smsError, setSmsError] = useState<string>("");
 
-  const [testPhone, setTestPhone] = useState("");
-  const [testLoading, setTestLoading] = useState(false);
-  const [testMsg, setTestMsg] = useState({ text: "", ok: true });
-
   const [manualPhone, setManualPhone] = useState("");
   const [manualLotteryId, setManualLotteryId] = useState("");
   const [manualQty, setManualQty] = useState("1");
@@ -58,16 +54,26 @@ export default function PendingClient() {
       const json = await res.json();
       if (!res.ok) { setError(json.error ?? "Алдаа гарлаа"); return; }
       setGroups(json.groups);
-      setLotteries(json.lotteries);
-      if (!manualLotteryId && json.lotteries[0]) setManualLotteryId(json.lotteries[0].id);
     } catch {
       setError("Сүлжээний алдаа");
     } finally {
       setLoading(false);
     }
-  }, [manualLotteryId]);
+  }, []);
 
-  useEffect(() => { fetchData(); }, []);
+  const fetchLotteries = useCallback(async () => {
+    try {
+      const res = await fetch("/api/lotteries");
+      const json = await res.json();
+      if (!res.ok) return;
+      setLotteries(json);
+      setManualLotteryId((prev) => prev || json[0]?.id || "");
+    } catch {
+      // manual-add form just won't have options; pending list still works
+    }
+  }, []);
+
+  useEffect(() => { fetchData(); fetchLotteries(); }, [fetchData, fetchLotteries]);
 
   async function approve(phone: string, lotteryId: string) {
     const key = `${phone}-${lotteryId}`;
@@ -104,81 +110,24 @@ export default function PendingClient() {
       body: JSON.stringify({ phone: manualPhone, lotteryId: manualLotteryId, quantity: Number(manualQty), paid: true }),
     });
     const data = await res.json();
+    setManualLoading(false);
     if (!res.ok) {
-      setManualLoading(false);
       setManualMsg({ text: data.error ?? "Алдаа гарлаа", ok: false });
       return;
     }
-    const approveRes = await fetch("/api/tickets/approve", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: manualPhone, lotteryId: manualLotteryId }),
-    });
-    const approveData = await approveRes.json();
-    setManualLoading(false);
-    const codes = approveData.codes ?? (data.tickets ?? []).map((t: { code: string }) => t.code);
-    if (!approveData.sms?.ok) {
-      setManualMsg({ text: `✓ Нэмэгдлээ (${codes.join(",")}) — SMS алдаа: ${approveData.sms?.detail ?? "тодорхойгүй"}`, ok: false });
+    const codes = (data.tickets ?? []).map((t: { code: string }) => t.code);
+    if (!data.sms?.ok) {
+      setManualMsg({ text: `✓ Нэмэгдлээ (${codes.join(",")}) — SMS алдаа: ${data.sms?.detail ?? "тодорхойгүй"}`, ok: false });
     } else {
       setManualMsg({ text: `✓ SMS илгээгдлээ → ${manualPhone} (${codes.join(",")})`, ok: true });
     }
     setManualPhone("");
     setManualQty("1");
-  }
-
-  async function handleTestSMS(e: React.FormEvent) {
-    e.preventDefault();
-    if (!/^\d{8}$/.test(testPhone)) { setTestMsg({ text: "8 оронтой дугаар оруулна уу", ok: false }); return; }
-    setTestLoading(true);
-    setTestMsg({ text: "", ok: true });
-    const res = await fetch("/api/sms/test", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: testPhone }),
-    });
-    const data = await res.json();
-    setTestLoading(false);
-    if (data.ok) {
-      setTestMsg({ text: `✓ Test SMS илгээгдлээ → ${testPhone}`, ok: true });
-    } else {
-      setTestMsg({ text: `SMS алдаа: ${data.detail ?? "тодорхойгүй"}`, ok: false });
-    }
+    fetchData();
   }
 
   return (
     <div className="space-y-6">
-      {/* Test SMS */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Send className="h-4 w-4 text-slate-400" />
-            SMS тест
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleTestSMS} className="flex gap-3 items-end">
-            <div className="space-y-1.5">
-              <Label>Утасны дугаар</Label>
-              <Input
-                type="tel"
-                inputMode="numeric"
-                value={testPhone}
-                onChange={(e) => setTestPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
-                placeholder="88001234"
-                className="w-36 font-mono"
-              />
-            </div>
-            <Button type="submit" variant="outline" disabled={testLoading} className="gap-1.5">
-              <Send className="h-3.5 w-3.5" />
-              {testLoading ? "Илгээж байна..." : "Тест илгээх"}
-            </Button>
-          </form>
-          {testMsg.text && (
-            <p className={`text-xs mt-2 font-mono ${testMsg.ok ? "text-green-600" : "text-red-500"}`}>{testMsg.text}</p>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Manual add */}
       <Card>
         <CardHeader className="pb-3">

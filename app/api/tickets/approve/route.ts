@@ -25,6 +25,19 @@ export async function POST(req: NextRequest) {
   const ids = tickets.map((t: { id: string }) => t.id);
   await db.from("tickets").update({ status: "paid" }).in("id", ids);
 
+  // Now that they're paid, count them toward the lottery's sold total.
+  const { data: lottery } = await db
+    .from("lotteries")
+    .select("tickets_sold")
+    .eq("id", lotteryId)
+    .single();
+  if (lottery) {
+    await db
+      .from("lotteries")
+      .update({ tickets_sold: lottery.tickets_sold + tickets.length })
+      .eq("id", lotteryId);
+  }
+
   const codes = tickets.map((t: { code: string }) => t.code);
   const message = `BLCK: ${codes.join(",")}`;
   console.log(`[Approve] phone=${phone} codes=${codes.join(",")} message="${message}"`);

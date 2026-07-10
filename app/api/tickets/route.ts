@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
 import { isAdminRequest } from "@/lib/adminAuth";
+import { sendSMS } from "@/lib/sms";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -51,10 +52,18 @@ export async function POST(req: NextRequest) {
   const { data, error } = await db.from("tickets").insert(tickets).select();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  await db
-    .from("lotteries")
-    .update({ tickets_sold: lottery.tickets_sold + quantity })
-    .eq("id", body.lotteryId);
+  // Only count toward tickets_sold once actually paid (pending tickets don't reserve a slot).
+  let sms: { ok: boolean; detail?: string } | undefined;
+  if (isPaid) {
+    await db
+      .from("lotteries")
+      .update({ tickets_sold: lottery.tickets_sold + quantity })
+      .eq("id", body.lotteryId);
 
-  return NextResponse.json({ tickets: data }, { status: 201 });
+    const codes = tickets.map((t) => t.code);
+    const message = `BLCK: ${codes.join(",")}`;
+    sms = await sendSMS(body.phone, message);
+  }
+
+  return NextResponse.json({ tickets: data, sms }, { status: 201 });
 }
