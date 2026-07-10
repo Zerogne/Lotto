@@ -1,6 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Ticket {
   code: string;
@@ -66,54 +70,60 @@ export default function RevealClient({ tickets, lotteries }: Props) {
   return (
     <div className="space-y-6">
       {/* Lottery selector */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-          Сугалаа сонгох
-        </label>
-        <select
-          value={selectedLotteryId}
-          onChange={(e) => { setSelectedLotteryId(e.target.value); reset(); }}
-          className="w-full h-11 border border-gray-200 rounded-lg px-3 text-sm font-semibold focus:outline-none focus:border-amber-400"
-        >
-          {lotteries.map((l) => (
-            <option key={l.id} value={l.id}>
-              {l.car_brand} {l.car_model} — {l.car_name}
-            </option>
-          ))}
-        </select>
-        <p className="text-xs text-gray-400 mt-2">
-          Энэ сугалаанд нийт <span className="font-bold text-gray-700">{lotteryTickets.length}</span> тасалбар байна
-        </p>
-      </div>
+      <Card>
+        <CardContent className="p-4">
+          <Label className="text-xs uppercase tracking-wider mb-2">Сугалаа сонгох</Label>
+          <Select
+            value={selectedLotteryId}
+            onValueChange={(val) => { setSelectedLotteryId(val); reset(); }}
+          >
+            <SelectTrigger className="h-11 font-semibold">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {lotteries.map((l) => (
+                <SelectItem key={l.id} value={l.id}>
+                  {l.car_brand} {l.car_model} — {l.car_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-gray-400 mt-2">
+            Энэ сугалаанд нийт <span className="font-bold text-gray-700">{lotteryTickets.length}</span> тасалбар байна
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Digit inputs */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 text-center">
-        <p className="text-sm text-gray-500 mb-4 uppercase tracking-wider font-semibold">Хожсон тасалбарын дугаар</p>
-        <div className="flex justify-center gap-3 mb-4">
-          {digits.map((d, i) => (
-            <input
-              key={i}
-              ref={inputRefs[i]}
-              type="text"
-              inputMode="numeric"
-              maxLength={1}
-              value={d}
-              onChange={(e) => handleDigit(i, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(i, e)}
-              className={`w-14 h-16 text-center text-2xl font-black border-2 rounded-xl focus:outline-none transition-colors ${
-                d ? "border-amber-500 bg-amber-50 text-amber-700" : "border-gray-200 focus:border-amber-400"
-              }`}
-            />
-          ))}
-        </div>
-        <button onClick={reset} className="text-xs text-gray-400 hover:text-gray-600 underline">
-          Цэвэрлэх
-        </button>
-      </div>
+      <Card>
+        <CardContent className="p-6 text-center">
+          <p className="text-sm text-gray-500 mb-4 uppercase tracking-wider font-semibold">Хожсон тасалбарын дугаар</p>
+          <div className="flex justify-center gap-3 mb-4">
+            {digits.map((d, i) => (
+              <input
+                key={i}
+                ref={inputRefs[i]}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={d}
+                onChange={(e) => handleDigit(i, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(i, e)}
+                className={`w-14 h-16 text-center text-2xl font-black border-2 rounded-xl focus:outline-none transition-colors ${
+                  d ? "border-amber-500 bg-amber-50 text-amber-700" : "border-gray-200 focus:border-amber-400"
+                }`}
+              />
+            ))}
+          </div>
+          <Button variant="ghost" size="sm" onClick={reset} className="text-xs text-gray-400 hover:text-gray-600 underline h-auto">
+            Цэвэрлэх
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Matches */}
       {partialCode.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+        <Card className="overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <p className="font-bold text-gray-900">
               {isComplete ? "Үр дүн" : `Таарч буй тасалбар (${matches.length})`}
@@ -159,7 +169,7 @@ export default function RevealClient({ tickets, lotteries }: Props) {
               )}
             </div>
           )}
-        </div>
+        </Card>
       )}
     </div>
   );

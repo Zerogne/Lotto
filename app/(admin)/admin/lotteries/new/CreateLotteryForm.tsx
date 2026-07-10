@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, Upload, Loader2, X } from "lucide-react";
 
 interface FormState {
@@ -275,13 +276,12 @@ export default function CreateLotteryForm() {
 
           <div className="space-y-1.5">
             <Label htmlFor="description">Тайлбар</Label>
-            <textarea
+            <Textarea
               id="description"
               value={form.description}
               onChange={set("description")}
               rows={3}
               placeholder="Машины тайлбар оруулна уу..."
-              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
             />
           </div>
 

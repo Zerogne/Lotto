@@ -1,6 +1,7 @@
 import { getLotteries, getTickets } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 
 export const dynamic = "force-dynamic";
 
@@ -51,47 +52,28 @@ export default async function TicketsPage() {
           {allTickets.length === 0 ? (
             <p className="text-center text-sm text-gray-400 py-10">Тасалбар байхгүй байна</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="text-left px-4 py-3 font-medium text-gray-500 whitespace-nowrap sticky left-0 bg-gray-50">
-                      Тасалбарын код
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-500 whitespace-nowrap">
-                      Утас
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-500 whitespace-nowrap">
-                      Сугалааны нэр
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-500 whitespace-nowrap">
-                      Огноо
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {allTickets.map((ticket, i) => (
-                    <tr
-                      key={`${ticket.code}-${i}`}
-                      className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-4 py-3 font-mono font-medium text-gray-900 whitespace-nowrap sticky left-0 bg-white">
-                        {ticket.code}
-                      </td>
-                      <td className="px-4 py-3 text-gray-600 whitespace-nowrap font-mono">
-                        {ticket.phone}
-                      </td>
-                      <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                        {ticket.lotteryName}
-                      </td>
-                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
-                        {ticket.purchaseDate}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="sticky left-0 bg-gray-50">Тасалбарын код</TableHead>
+                  <TableHead>Утас</TableHead>
+                  <TableHead>Сугалааны нэр</TableHead>
+                  <TableHead>Огноо</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {allTickets.map((ticket, i) => (
+                  <TableRow key={`${ticket.code}-${i}`}>
+                    <TableCell className="sticky left-0 bg-white font-mono font-medium text-gray-900">
+                      {ticket.code}
+                    </TableCell>
+                    <TableCell className="text-gray-600 font-mono">{ticket.phone}</TableCell>
+                    <TableCell className="text-gray-600">{ticket.lotteryName}</TableCell>
+                    <TableCell className="text-gray-500">{ticket.purchaseDate}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

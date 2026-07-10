@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2, Trash2, Upload, Loader2, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
@@ -324,26 +326,28 @@ export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
 
             <div className="space-y-1.5">
               <Label htmlFor="status">Төлөв</Label>
-              <select
-                id="status"
+              <Select
                 value={form.status}
-                onChange={set("status")}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                onValueChange={(val) => setForm((prev) => ({ ...prev, status: val }))}
               >
-                <option value="active">Идэвхтэй</option>
-                <option value="drawing">Шалгаруулж байна</option>
-                <option value="ended">Дууссан</option>
-              </select>
+                <SelectTrigger id="status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Идэвхтэй</SelectItem>
+                  <SelectItem value="drawing">Шалгаруулж байна</SelectItem>
+                  <SelectItem value="ended">Дууссан</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="description">Тайлбар</Label>
-              <textarea
+              <Textarea
                 id="description"
                 value={form.description}
                 onChange={set("description")}
                 rows={3}
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
               />
             </div>
 

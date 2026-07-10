@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
+import { isAdminRequest } from "@/lib/adminAuth";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -16,6 +17,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
+  const isPaid = body.paid === true; // admin manual add = paid immediately
+  if (isPaid && !isAdminRequest(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const db = createAdminClient();
 
   const { data: lottery } = await db
@@ -29,7 +35,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Sold out" }, { status: 400 });
 
   const quantity = Number(body.quantity ?? 1);
-  const isPaid = body.paid === true; // admin manual add = paid immediately
 
   const tickets = [];
   for (let i = 0; i < quantity; i++) {
