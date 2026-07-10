@@ -7,16 +7,8 @@ export default function PublicNav() {
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 font-bold text-lg text-gray-900">
           <Trophy className="h-5 w-5 text-amber-500" />
-          <span>LottoMN</span>
+          <span>BLCK Авто Худалдаа</span>
         </Link>
-        <div className="flex items-center gap-4">
-          <Link
-            href="/winners"
-            className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            Хожигчид
-          </Link>
-        </div>
       </div>
     </nav>
   );

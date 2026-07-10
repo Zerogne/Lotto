@@ -57,7 +57,7 @@ export default async function LotteryDetailPage({
         {/* Title + price */}
         <div>
           <h1 className="text-2xl font-black uppercase tracking-wide text-[#162032] leading-tight">
-            <span className="text-amber-500">{lottery.carBrand}</span> {lottery.carModel}
+            <span className="text-amber-500">{lottery.carName}</span> {lottery.carModel}
           </h1>
         </div>
 

@@ -43,12 +43,6 @@ export default async function LandingPage() {
             <h1 className="text-2xl font-bold text-gray-900 mb-3">
               Тун удахгүй шинэ сугалаа нэмэгдэнэ
             </h1>
-            <Link
-              href="/winners"
-              className="inline-block bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm px-8 py-3 rounded-xl transition-colors"
-            >
-              Хожигчдын жагсаалт
-            </Link>
           </div>
         )}
 

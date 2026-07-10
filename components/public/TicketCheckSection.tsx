@@ -78,7 +78,7 @@ export default function TicketCheckSection({
         <DarkHeroShell className="shrink-0">
           <div className="relative z-10 px-4 py-8 text-center">
             <span className="mb-4 inline-block rounded-full bg-white/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-amber-200">
-              Тасалбар шалгах
+              Сугалаа шалгах
             </span>
             <p className="font-black text-2xl uppercase tracking-widest leading-none text-amber-400 drop-shadow-lg sm:text-3xl">
               {lotteryMeta.carBrand}
@@ -100,6 +100,7 @@ export default function TicketCheckSection({
         <div className="mx-auto w-full max-w-lg flex-1 px-4 pt-4 pb-6 lg:pb-8">
           <form onSubmit={handleSubmit} className="w-full">
             <div className="mb-4">
+              <h1>Сугалаа шалгах</h1>
               <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                 Утасны дугаар
               </label>
@@ -163,7 +164,7 @@ export default function TicketCheckSection({
                   <div className="overflow-hidden rounded-xl border-2 border-amber-200 bg-gradient-to-br from-white to-amber-50/60 shadow-sm">
                     <div className="border-b border-amber-200 bg-amber-50/95 px-3 py-2">
                       <p className="text-center text-[11px] font-black uppercase tracking-[0.12em] text-amber-800">
-                        Олсон тасалбар ({matches.length})
+                        Олсон сугалаа ({matches.length})
                       </p>
                     </div>
                     <div className="divide-y divide-amber-100 px-3 py-2">
@@ -186,7 +187,7 @@ export default function TicketCheckSection({
                     </div>
                     <div className="rounded-b-xl border-t border-amber-100 bg-amber-50/80 px-3 py-3 text-center">
                       <CheckCircle2 className="mx-auto mb-1 size-5 text-green-600" aria-hidden />
-                      <p className="text-xs text-gray-700">Тасалбар олдлоо. Хожигч зарлагдах хүртэл хүлээнэ үү.</p>
+                      <p className="text-xs text-gray-700">Сугалаа олдлоо. Хожигч зарлагдах хүртэл хүлээнэ үү.</p>
                     </div>
                   </div>
                 )}
@@ -196,11 +197,11 @@ export default function TicketCheckSection({
                     <div className="mb-2 flex items-center justify-center gap-2">
                       <XCircle className="size-6 shrink-0 text-red-500" aria-hidden />
                       <span className="font-black uppercase tracking-wide text-red-800">
-                        Тасалбар олдсонгүй
+                        Сугалаа олдсонгүй
                       </span>
                     </div>
                     <p className="text-center text-red-900/95">
-                      Энэ утасны дугаарын тасалбар олдсонгүй. Дугаар эсвэл хамгаалалтаа шалгаад
+                      Энэ утасны дугаарт бүртгэгдсэн сугалаа олдсонгүй. Дугаараа шалгаад
                       дахин оролдоно уу.
                     </p>
                   </div>

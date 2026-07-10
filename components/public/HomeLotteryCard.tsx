@@ -39,7 +39,7 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
           {imageOk && lottery.carImage && lottery.carImage !== "/images/car-placeholder.svg" ? (
             <Image
               src={lottery.carImage}
-              alt={`${lottery.carBrand} ${lottery.carModel}`}
+              alt={lottery.carName}
               fill
               sizes="(max-width: 768px) 100vw, 600px"
               className="object-cover object-center transition duration-300 group-hover:scale-[1.03]"
@@ -53,12 +53,9 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
 
         {/* Content */}
         <div className="px-5 pt-4 pb-5">
-          <h2 className="text-xl font-black uppercase tracking-wide text-[#162032] leading-tight mb-1">
-            <span className="">{lottery.carBrand}</span> {lottery.carModel}
+          <h2 className="text-xl font-black uppercase tracking-wide text-[#162032] leading-tight mb-3">
+            {lottery.carName}
           </h2>
-          <p className="text-2xl font-black text-amber-600 mb-3">
-            {formatMNT(lottery.prizeValue)}
-          </p>
 
           {active && (
             <>
@@ -78,7 +75,7 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
                   />
                 </div>
                 <div className="mt-1 flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  <span>Тасалбарын явц</span>
+                  <span>Сугалааны явц</span>
                   <span className="tabular-nums">{Math.round(pct)}%</span>
                 </div>
               </div>
@@ -107,7 +104,7 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
         {imageOk ? (
           <Image
             src={lottery.carImage}
-            alt={`${lottery.carBrand} ${lottery.carModel}`}
+            alt={lottery.carName}
             fill
             sizes="(max-width: 640px) 72px, 80px"
             className={`object-cover object-center transition duration-300 group-hover:scale-[1.04] ${active ? "" : "opacity-85 grayscale-[0.35]"}`}
@@ -121,11 +118,8 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 sm:gap-1.5">
-        <p className="truncate font-black text-[15px] uppercase leading-tight tracking-wide text-[#162032]">
-          {lottery.carBrand} {lottery.carModel}
-        </p>
-        <p className="font-black tabular-nums text-[clamp(1.05rem,2.8vw,1.35rem)] leading-none text-amber-600">
-          {formatMNT(lottery.prizeValue)}
+        <p className="truncate font-black text-[clamp(1.05rem,2.8vw,1.2rem)] uppercase leading-tight tracking-wide text-[#162032]">
+          {lottery.carName}
         </p>
 
         {active ? (
