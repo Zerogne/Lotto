@@ -167,13 +167,12 @@ export default function PendingClient() {
               <Input
                 type="number"
                 min={1}
-                max={20}
                 value={manualQty}
                 onChange={(e) => {
                   const digits = e.target.value.replace(/\D/g, "");
-                  setManualQty(digits === "" ? "" : String(Math.min(20, Number.parseInt(digits, 10))));
+                  setManualQty(digits === "" ? "" : String(Number.parseInt(digits, 10)));
                 }}
-                onBlur={() => setManualQty(String(Math.min(20, Math.max(1, Number.parseInt(manualQty, 10) || 1))))}
+                onBlur={() => setManualQty(String(Math.max(1, Number.parseInt(manualQty, 10) || 1)))}
                 className="w-20"
               />
             </div>
@@ -189,7 +188,8 @@ export default function PendingClient() {
         </CardContent>
       </Card>
 
-      {/* Pending list */}
+      {/* Pending list (hidden — automatic/QPay pending approvals not currently used) */}
+      {false && (
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -246,6 +246,7 @@ export default function PendingClient() {
           )}
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

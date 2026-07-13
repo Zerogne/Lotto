@@ -24,8 +24,12 @@ export async function POST(req: NextRequest) {
   }
 
   const quantity = Number(body.quantity ?? 1);
-  const MAX_QUANTITY_PER_PURCHASE = 20; // keeps a single SMS (one message's worth of codes) under the character limit
-  if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_QUANTITY_PER_PURCHASE) {
+  const MAX_QUANTITY_PER_PURCHASE = 20; // keeps a single SMS (one message's worth of codes) under the character limit for public self-service purchases
+  if (isPaid) {
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      return NextResponse.json({ error: "Тоо ширхэг буруу байна" }, { status: 400 });
+    }
+  } else if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_QUANTITY_PER_PURCHASE) {
     return NextResponse.json({ error: `Нэг удаад 1-${MAX_QUANTITY_PER_PURCHASE} тасалбар авах боломжтой` }, { status: 400 });
   }
 
