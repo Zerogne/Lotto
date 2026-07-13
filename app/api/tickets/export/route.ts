@@ -1,13 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { getLotteries, getTickets } from "@/lib/db";
 import { formatDateTime } from "@/lib/mock-data";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  const [lotteries, tickets] = await Promise.all([getLotteries(), getTickets()]);
+export async function GET(req: NextRequest) {
+  const lotteryId = req.nextUrl.searchParams.get("lotteryId");
+
+  const [lotteries, allTickets] = await Promise.all([getLotteries(), getTickets()]);
+  const tickets = lotteryId ? allTickets.filter((t) => t.lotteryId === lotteryId) : allTickets;
   const priceByLotteryId = new Map(lotteries.map((l) => [l.id, l.ticketPrice]));
+  const lottery = lotteryId ? lotteries.find((l) => l.id === lotteryId) : undefined;
 
   const groups = new Map<
     string,
@@ -50,10 +54,13 @@ export async function GET() {
 
   const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
 
+  const namePart = lottery ? `${lottery.carName.replace(/[^a-zA-Z0-9а-яА-ЯөүӨҮ]+/g, "-")}-` : "";
+  const filename = `tickets-${namePart}${new Date().toISOString().split("T")[0]}.xlsx`;
+
   return new NextResponse(buffer, {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="tickets-${new Date().toISOString().split("T")[0]}.xlsx"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
     },
   });
 }

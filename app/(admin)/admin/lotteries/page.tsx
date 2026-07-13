@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { PlusCircle, Pencil } from "lucide-react";
+import { PlusCircle, Pencil, Download } from "lucide-react";
 import DeleteLotteryButton from "./DeleteLotteryButton";
 
 export const dynamic = "force-dynamic";
@@ -93,6 +93,11 @@ export default async function LotteriesPage() {
                     Засах
                   </Button>
                 </Link>
+                <a href={`/api/tickets/export?lotteryId=${lottery.id}`}>
+                  <Button size="sm" variant="outline" className="gap-1">
+                    <Download className="h-3 w-3" />
+                  </Button>
+                </a>
                 <DeleteLotteryButton lotteryId={lottery.id} lotteryName={lottery.carName} />
               </div>
             </CardContent>
@@ -138,6 +143,12 @@ export default async function LotteriesPage() {
                             Засах
                           </Button>
                         </Link>
+                        <a href={`/api/tickets/export?lotteryId=${lottery.id}`}>
+                          <Button size="sm" variant="outline" className="gap-1 text-xs">
+                            <Download className="h-3 w-3" />
+                            Excel
+                          </Button>
+                        </a>
                         <DeleteLotteryButton lotteryId={lottery.id} lotteryName={lottery.carName} />
                       </div>
                     </TableCell>

@@ -1,8 +1,6 @@
 import { getLotteries, getTickets } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
 import TicketUnitsTable, { TicketGroup } from "./TicketUnitsTable";
 import ManualTicketAdd from "./ManualTicketAdd";
 
@@ -53,17 +51,9 @@ export default async function TicketsPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Бүх тасалбарууд</h1>
-          <p className="text-sm text-gray-500">Нийт {allTickets.length} код</p>
-        </div>
-        <a href="/api/tickets/export">
-          <Button variant="outline" size="sm" className="gap-2">
-            <Download className="h-3.5 w-3.5" />
-            Excel татах
-          </Button>
-        </a>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Бүх тасалбарууд</h1>
+        <p className="text-sm text-gray-500">Нийт {allTickets.length} код</p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4 mb-6 items-stretch">
