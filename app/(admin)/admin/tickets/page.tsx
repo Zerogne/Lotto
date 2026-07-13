@@ -10,7 +10,9 @@ export const dynamic = "force-dynamic";
 export default async function TicketsPage() {
   const [lotteries, allTickets] = await Promise.all([getLotteries(), getTickets()]);
 
-  const unitMap = new Map<string, TicketUnit>();
+  const priceByLotteryId = new Map(lotteries.map((l) => [l.id, l.ticketPrice]));
+
+  const unitMap = new Map<string, Omit<TicketUnit, "unitNumber">>();
   for (const t of allTickets) {
     const existing = unitMap.get(t.purchaseGroupId);
     if (existing) {
@@ -23,10 +25,13 @@ export default async function TicketsPage() {
         phone: t.phone,
         codes: [t.code],
         createdAt: t.createdAt,
+        price: priceByLotteryId.get(t.lotteryId) ?? 0,
       });
     }
   }
-  const units = Array.from(unitMap.values()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const units = Array.from(unitMap.values())
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((unit, i, arr) => ({ ...unit, unitNumber: arr.length - i }));
 
   return (
     <div>

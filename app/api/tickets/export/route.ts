@@ -1,17 +1,31 @@
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
-import { getTickets } from "@/lib/db";
+import { getLotteries, getTickets } from "@/lib/db";
+import { formatDateTime } from "@/lib/mock-data";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const tickets = await getTickets();
+  const [lotteries, tickets] = await Promise.all([getLotteries(), getTickets()]);
+  const priceByLotteryId = new Map(lotteries.map((l) => [l.id, l.ticketPrice]));
 
-  const rows = tickets.map((t) => ({
-    "Тасалбарын код": t.code,
-    "Утас": t.phone,
-    "Сугалааны нэр": t.lotteryName,
-    "Огноо": t.purchaseDate,
+  const groups = new Map<string, { unit: (typeof tickets)[number]; codes: string[] }>();
+  for (const t of tickets) {
+    const existing = groups.get(t.purchaseGroupId);
+    if (existing) existing.codes.push(t.code);
+    else groups.set(t.purchaseGroupId, { unit: t, codes: [t.code] });
+  }
+  const units = Array.from(groups.values()).sort((a, b) =>
+    b.unit.createdAt.localeCompare(a.unit.createdAt)
+  );
+
+  const rows = units.map(({ unit, codes }, i) => ({
+    "№": units.length - i,
+    "Утас": unit.phone,
+    "Сугалааны нэр": unit.lotteryName,
+    "Кодууд": codes.join(", "),
+    "Үнэ": priceByLotteryId.get(unit.lotteryId) ?? 0,
+    "Огноо, цаг": formatDateTime(unit.createdAt),
   }));
 
   const sheet = XLSX.utils.json_to_sheet(rows);

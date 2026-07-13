@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { formatDateTime } from "@/lib/mock-data";
+import { formatDateTime, formatMNT } from "@/lib/mock-data";
 import { Trash2, Loader2 } from "lucide-react";
 
 export interface TicketUnit {
@@ -13,6 +13,8 @@ export interface TicketUnit {
   phone: string;
   codes: string[];
   createdAt: string;
+  price: number;
+  unitNumber: number;
 }
 
 export default function TicketUnitsTable({ units }: { units: TicketUnit[] }) {
@@ -48,9 +50,11 @@ export default function TicketUnitsTable({ units }: { units: TicketUnit[] }) {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>№</TableHead>
             <TableHead>Утас</TableHead>
             <TableHead>Сугалааны нэр</TableHead>
             <TableHead>Кодууд</TableHead>
+            <TableHead>Үнэ</TableHead>
             <TableHead>Огноо, цаг</TableHead>
             <TableHead />
           </TableRow>
@@ -58,9 +62,11 @@ export default function TicketUnitsTable({ units }: { units: TicketUnit[] }) {
         <TableBody>
           {rows.map((unit) => (
             <TableRow key={unit.purchaseGroupId}>
+              <TableCell className="text-gray-500 tabular-nums">{unit.unitNumber}</TableCell>
               <TableCell className="text-gray-600 font-mono whitespace-nowrap">{unit.phone}</TableCell>
               <TableCell className="text-gray-600 whitespace-nowrap">{unit.lotteryName}</TableCell>
               <TableCell className="text-gray-900 font-mono text-xs">{unit.codes.join(", ")}</TableCell>
+              <TableCell className="text-gray-600 whitespace-nowrap">{formatMNT(unit.price)}</TableCell>
               <TableCell className="text-gray-500 whitespace-nowrap">{formatDateTime(unit.createdAt)}</TableCell>
               <TableCell>
                 <Button
