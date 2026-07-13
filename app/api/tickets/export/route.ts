@@ -9,23 +9,39 @@ export async function GET() {
   const [lotteries, tickets] = await Promise.all([getLotteries(), getTickets()]);
   const priceByLotteryId = new Map(lotteries.map((l) => [l.id, l.ticketPrice]));
 
-  const groups = new Map<string, { unit: (typeof tickets)[number]; codes: string[] }>();
+  const groups = new Map<
+    string,
+    { phone: string; lotteryId: string; lotteryName: string; codes: string[]; unitIds: Set<string>; lastPurchasedAt: string }
+  >();
   for (const t of tickets) {
-    const existing = groups.get(t.purchaseGroupId);
-    if (existing) existing.codes.push(t.code);
-    else groups.set(t.purchaseGroupId, { unit: t, codes: [t.code] });
+    const key = `${t.phone}-${t.lotteryId}`;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.codes.push(t.code);
+      existing.unitIds.add(t.purchaseGroupId);
+      if (t.createdAt > existing.lastPurchasedAt) existing.lastPurchasedAt = t.createdAt;
+    } else {
+      groups.set(key, {
+        phone: t.phone,
+        lotteryId: t.lotteryId,
+        lotteryName: t.lotteryName,
+        codes: [t.code],
+        unitIds: new Set([t.purchaseGroupId]),
+        lastPurchasedAt: t.createdAt,
+      });
+    }
   }
-  const units = Array.from(groups.values()).sort((a, b) =>
-    b.unit.createdAt.localeCompare(a.unit.createdAt)
+  const sortedGroups = Array.from(groups.values()).sort((a, b) =>
+    b.lastPurchasedAt.localeCompare(a.lastPurchasedAt)
   );
 
-  const rows = units.map(({ unit, codes }, i) => ({
-    "№": units.length - i,
-    "Утас": unit.phone,
-    "Сугалааны нэр": unit.lotteryName,
-    "Кодууд": codes.join(", "),
-    "Үнэ": priceByLotteryId.get(unit.lotteryId) ?? 0,
-    "Огноо, цаг": formatDateTime(unit.createdAt),
+  const rows = sortedGroups.map((g) => ({
+    "Ширхэг": g.unitIds.size,
+    "Утас": g.phone,
+    "Сугалааны нэр": g.lotteryName,
+    "Кодууд": g.codes.join(", "),
+    "Нийт үнэ": (priceByLotteryId.get(g.lotteryId) ?? 0) * g.unitIds.size,
+    "Сүүлд авсан": formatDateTime(g.lastPurchasedAt),
   }));
 
   const sheet = XLSX.utils.json_to_sheet(rows);

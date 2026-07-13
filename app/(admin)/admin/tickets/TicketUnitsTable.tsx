@@ -6,30 +6,33 @@ import { Button } from "@/components/ui/button";
 import { formatDateTime, formatMNT } from "@/lib/mock-data";
 import { Trash2, Loader2 } from "lucide-react";
 
-export interface TicketUnit {
-  purchaseGroupId: string;
+export interface TicketGroup {
+  phone: string;
   lotteryId: string;
   lotteryName: string;
-  phone: string;
   codes: string[];
-  createdAt: string;
-  price: number;
-  unitNumber: number;
+  unitsCount: number;
+  totalPrice: number;
+  lastPurchasedAt: string;
 }
 
-export default function TicketUnitsTable({ units }: { units: TicketUnit[] }) {
-  const [rows, setRows] = useState(units);
+export default function TicketUnitsTable({ groups }: { groups: TicketGroup[] }) {
+  const [rows, setRows] = useState(groups);
   const [refunding, setRefunding] = useState<string | null>(null);
   const [error, setError] = useState("");
 
-  async function refund(unit: TicketUnit) {
-    if (!confirm(`${unit.phone} дугаарын ${unit.codes.length} код бүхий сугалааг устгах уу?`)) return;
-    setRefunding(unit.purchaseGroupId);
+  function keyOf(g: TicketGroup) {
+    return `${g.phone}-${g.lotteryId}`;
+  }
+
+  async function refund(group: TicketGroup) {
+    if (!confirm(`${group.phone} дугаарын ${group.unitsCount} ширхэг (${group.codes.length} код) сугалааг устгах уу?`)) return;
+    setRefunding(keyOf(group));
     setError("");
     const res = await fetch("/api/tickets/refund", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ purchaseGroupId: unit.purchaseGroupId, lotteryId: unit.lotteryId }),
+      body: JSON.stringify({ phone: group.phone, lotteryId: group.lotteryId }),
     });
     setRefunding(null);
     if (!res.ok) {
@@ -37,7 +40,7 @@ export default function TicketUnitsTable({ units }: { units: TicketUnit[] }) {
       setError(data.error ?? "Алдаа гарлаа");
       return;
     }
-    setRows((prev) => prev.filter((r) => r.purchaseGroupId !== unit.purchaseGroupId));
+    setRows((prev) => prev.filter((r) => keyOf(r) !== keyOf(group)));
   }
 
   if (rows.length === 0) {
@@ -50,38 +53,38 @@ export default function TicketUnitsTable({ units }: { units: TicketUnit[] }) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>№</TableHead>
+            <TableHead>Ширхэг</TableHead>
             <TableHead>Утас</TableHead>
             <TableHead>Сугалааны нэр</TableHead>
             <TableHead>Кодууд</TableHead>
-            <TableHead>Үнэ</TableHead>
-            <TableHead>Огноо, цаг</TableHead>
+            <TableHead>Нийт үнэ</TableHead>
+            <TableHead>Сүүлд авсан</TableHead>
             <TableHead />
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((unit) => (
-            <TableRow key={unit.purchaseGroupId}>
-              <TableCell className="text-gray-500 tabular-nums">{unit.unitNumber}</TableCell>
-              <TableCell className="text-gray-600 font-mono whitespace-nowrap">{unit.phone}</TableCell>
-              <TableCell className="text-gray-600 whitespace-nowrap">{unit.lotteryName}</TableCell>
-              <TableCell className="text-gray-900 font-mono text-xs">{unit.codes.join(", ")}</TableCell>
-              <TableCell className="text-gray-600 whitespace-nowrap">{formatMNT(unit.price)}</TableCell>
-              <TableCell className="text-gray-500 whitespace-nowrap">{formatDateTime(unit.createdAt)}</TableCell>
+          {rows.map((group) => (
+            <TableRow key={keyOf(group)}>
+              <TableCell className="text-gray-500 tabular-nums">{group.unitsCount}</TableCell>
+              <TableCell className="text-gray-600 font-mono whitespace-nowrap">{group.phone}</TableCell>
+              <TableCell className="text-gray-600 whitespace-nowrap">{group.lotteryName}</TableCell>
+              <TableCell className="text-gray-900 font-mono text-xs">{group.codes.join(", ")}</TableCell>
+              <TableCell className="text-gray-600 whitespace-nowrap">{formatMNT(group.totalPrice)}</TableCell>
+              <TableCell className="text-gray-500 whitespace-nowrap">{formatDateTime(group.lastPurchasedAt)}</TableCell>
               <TableCell>
                 <Button
                   variant="outline"
                   size="sm"
                   className="gap-1 text-xs text-red-600 hover:text-red-700"
-                  disabled={refunding === unit.purchaseGroupId}
-                  onClick={() => refund(unit)}
+                  disabled={refunding === keyOf(group)}
+                  onClick={() => refund(group)}
                 >
-                  {refunding === unit.purchaseGroupId ? (
+                  {refunding === keyOf(group) ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
                   ) : (
                     <Trash2 className="h-3 w-3" />
                   )}
-                  Буцаах
+                  Устгах
                 </Button>
               </TableCell>
             </TableRow>

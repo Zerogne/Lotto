@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import TicketUnitsTable, { TicketUnit } from "./TicketUnitsTable";
+import TicketUnitsTable, { TicketGroup } from "./TicketUnitsTable";
+import ManualTicketAdd from "./ManualTicketAdd";
 
 export const dynamic = "force-dynamic";
 
@@ -12,33 +13,50 @@ export default async function TicketsPage() {
 
   const priceByLotteryId = new Map(lotteries.map((l) => [l.id, l.ticketPrice]));
 
-  const unitMap = new Map<string, Omit<TicketUnit, "unitNumber">>();
+  const groupMap = new Map<string, TicketGroup & { unitIds: Set<string> }>();
   for (const t of allTickets) {
-    const existing = unitMap.get(t.purchaseGroupId);
+    const key = `${t.phone}-${t.lotteryId}`;
+    const existing = groupMap.get(key);
     if (existing) {
       existing.codes.push(t.code);
+      existing.unitIds.add(t.purchaseGroupId);
+      if (t.createdAt > existing.lastPurchasedAt) existing.lastPurchasedAt = t.createdAt;
     } else {
-      unitMap.set(t.purchaseGroupId, {
-        purchaseGroupId: t.purchaseGroupId,
+      groupMap.set(key, {
+        phone: t.phone,
         lotteryId: t.lotteryId,
         lotteryName: t.lotteryName,
-        phone: t.phone,
         codes: [t.code],
-        createdAt: t.createdAt,
-        price: priceByLotteryId.get(t.lotteryId) ?? 0,
+        unitsCount: 0,
+        totalPrice: 0,
+        lastPurchasedAt: t.createdAt,
+        unitIds: new Set([t.purchaseGroupId]),
       });
     }
   }
-  const units = Array.from(unitMap.values())
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .map((unit, i, arr) => ({ ...unit, unitNumber: arr.length - i }));
+
+  const groups = Array.from(groupMap.values())
+    .map((g) => {
+      const unitsCount = g.unitIds.size;
+      const price = priceByLotteryId.get(g.lotteryId) ?? 0;
+      return {
+        phone: g.phone,
+        lotteryId: g.lotteryId,
+        lotteryName: g.lotteryName,
+        codes: g.codes,
+        unitsCount,
+        totalPrice: price * unitsCount,
+        lastPurchasedAt: g.lastPurchasedAt,
+      };
+    })
+    .sort((a, b) => b.lastPurchasedAt.localeCompare(a.lastPurchasedAt));
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Бүх тасалбарууд</h1>
-          <p className="text-sm text-gray-500">Нийт {allTickets.length} тасалбар</p>
+          <p className="text-sm text-gray-500">Нийт {allTickets.length} код</p>
         </div>
         <a href="/api/tickets/export">
           <Button variant="outline" size="sm" className="gap-2">
@@ -48,16 +66,20 @@ export default async function TicketsPage() {
         </a>
       </div>
 
+      <div className="mb-6">
+        <ManualTicketAdd />
+      </div>
+
       {/* Summary by lottery */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         {lotteries.map((lottery) => {
-          const count = allTickets.filter((t) => t.lotteryId === lottery.id).length;
+          const codesCount = allTickets.filter((t) => t.lotteryId === lottery.id).length;
           return (
             <Card key={lottery.id}>
               <CardContent className="p-4">
                 <p className="font-medium text-gray-900 text-sm mb-1 truncate">{lottery.carName}</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-gray-900">{count}</span>
+                  <span className="text-2xl font-bold text-gray-900">{codesCount}</span>
                   <Badge
                     variant={lottery.status === "active" ? "success" : "outline"}
                     className="text-xs"
@@ -66,7 +88,7 @@ export default async function TicketsPage() {
                   </Badge>
                 </div>
                 <p className="text-xs text-gray-400 mt-1">
-                  {lottery.maxTickets - count} тасалбар үлдсэн
+                  {lottery.ticketsSold}/{lottery.maxTickets} ширхэг зарагдсан
                 </p>
               </CardContent>
             </Card>
@@ -82,7 +104,7 @@ export default async function TicketsPage() {
           <CardTitle className="text-base">Тасалбарын жагсаалт</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <TicketUnitsTable units={units} />
+          <TicketUnitsTable groups={groups} />
         </CardContent>
       </Card>
     </div>

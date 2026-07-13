@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, List, Ticket, PlusCircle, Trophy, LogOut, Database, Clock, Star } from "lucide-react";
+import { LayoutDashboard, List, Ticket, PlusCircle, Trophy, LogOut, Database, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/admin", label: "Хяналт", icon: LayoutDashboard, exact: true },
   { href: "/admin/lotteries", label: "Сугалаа", icon: List, exact: false },
   { href: "/admin/tickets", label: "Тасалбар", icon: Ticket, exact: false },
-  { href: "/admin/pending", label: "Төлбөр", icon: Clock, exact: false },
   { href: "/admin/reveal", label: "Хожигч", icon: Star, exact: false },
 ];
 
