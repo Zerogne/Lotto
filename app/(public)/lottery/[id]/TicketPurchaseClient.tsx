@@ -37,7 +37,7 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
     const errs: typeof errors = {};
     if (!/^\d{8}$/.test(phone)) errs.phone = "8 оронтой утасны дугаар оруулна уу";
     if (!selectedLottery) errs.lottery = "Сугалаа сонгоно уу";
-    if (!(qtyNum >= 1 && qtyNum <= 20)) errs.quantity = "Тоо ширхэг 1-20 хооронд байна";
+    if (!(qtyNum >= 1)) errs.quantity = "Тоо ширхэг 1-ээс дээш байна";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -156,14 +156,13 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
             type="number"
             inputMode="numeric"
             min={1}
-            max={20}
             value={quantity}
             onChange={(e) => {
               const digits = e.target.value.replace(/\D/g, "");
-              setQuantity(digits === "" ? "" : String(Math.min(20, Number.parseInt(digits, 10))));
+              setQuantity(digits === "" ? "" : String(Number.parseInt(digits, 10)));
               setErrors((p) => ({ ...p, quantity: undefined }));
             }}
-            onBlur={() => setQuantity(String(Math.min(20, Math.max(1, Number.parseInt(quantity, 10) || 1))))}
+            onBlur={() => setQuantity(String(Math.max(1, Number.parseInt(quantity, 10) || 1)))}
             className="w-full h-12 border-2 border-gray-200 rounded-lg px-4 text-lg font-bold tabular-nums focus:outline-none focus:border-amber-400"
           />
           {errors.quantity && <p className="text-red-500 text-xs mt-1">{errors.quantity}</p>}

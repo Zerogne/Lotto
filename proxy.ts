@@ -7,8 +7,10 @@ function isProtectedApiRequest(pathname: string, method: string): boolean {
     (/^\/api\/lotteries\/[^/]+$/.test(pathname) && (method === "PUT" || method === "DELETE")) ||
     (/^\/api\/draw\/[^/]+$/.test(pathname) && method === "POST") ||
     (pathname === "/api/tickets/approve" && method === "POST") ||
+    (pathname === "/api/tickets/refund" && method === "POST") ||
     (pathname === "/api/pending" && method === "GET") ||
     (pathname === "/api/tickets" && method === "GET") ||
+    (pathname === "/api/tickets/export" && method === "GET") ||
     (pathname === "/api/upload/sign" && method === "POST") ||
     (pathname === "/api/setup" && method === "POST") ||
     (pathname === "/api/winners" && method === "GET")

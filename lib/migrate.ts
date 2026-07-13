@@ -40,6 +40,7 @@ create table if not exists winners (
 );
 
 alter table lotteries add column if not exists car_images text[] default '{}';
+alter table tickets add column if not exists purchase_group_id uuid;
 
 alter table lotteries disable row level security;
 alter table tickets   disable row level security;

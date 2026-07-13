@@ -30,6 +30,8 @@ function mapTicket(r: any): Ticket {
     lotteryId: r.lottery_id,
     lotteryName: r.lottery_name ?? "",
     purchaseDate: r.purchase_date ?? "",
+    purchaseGroupId: r.purchase_group_id ?? r.code,
+    createdAt: r.created_at ?? "",
   };
 }
 

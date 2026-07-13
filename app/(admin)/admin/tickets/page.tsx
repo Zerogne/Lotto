@@ -1,18 +1,46 @@
 import { getLotteries, getTickets } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import TicketUnitsTable, { TicketUnit } from "./TicketUnitsTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function TicketsPage() {
   const [lotteries, allTickets] = await Promise.all([getLotteries(), getTickets()]);
 
+  const unitMap = new Map<string, TicketUnit>();
+  for (const t of allTickets) {
+    const existing = unitMap.get(t.purchaseGroupId);
+    if (existing) {
+      existing.codes.push(t.code);
+    } else {
+      unitMap.set(t.purchaseGroupId, {
+        purchaseGroupId: t.purchaseGroupId,
+        lotteryId: t.lotteryId,
+        lotteryName: t.lotteryName,
+        phone: t.phone,
+        codes: [t.code],
+        createdAt: t.createdAt,
+      });
+    }
+  }
+  const units = Array.from(unitMap.values()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Бүх тасалбарууд</h1>
-        <p className="text-sm text-gray-500">Нийт {allTickets.length} тасалбар</p>
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Бүх тасалбарууд</h1>
+          <p className="text-sm text-gray-500">Нийт {allTickets.length} тасалбар</p>
+        </div>
+        <a href="/api/tickets/export">
+          <Button variant="outline" size="sm" className="gap-2">
+            <Download className="h-3.5 w-3.5" />
+            Excel татах
+          </Button>
+        </a>
       </div>
 
       {/* Summary by lottery */}
@@ -49,32 +77,7 @@ export default async function TicketsPage() {
           <CardTitle className="text-base">Тасалбарын жагсаалт</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          {allTickets.length === 0 ? (
-            <p className="text-center text-sm text-gray-400 py-10">Тасалбар байхгүй байна</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="sticky left-0 bg-gray-50">Тасалбарын код</TableHead>
-                  <TableHead>Утас</TableHead>
-                  <TableHead>Сугалааны нэр</TableHead>
-                  <TableHead>Огноо</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {allTickets.map((ticket, i) => (
-                  <TableRow key={`${ticket.code}-${i}`}>
-                    <TableCell className="sticky left-0 bg-white font-mono font-medium text-gray-900">
-                      {ticket.code}
-                    </TableCell>
-                    <TableCell className="text-gray-600 font-mono">{ticket.phone}</TableCell>
-                    <TableCell className="text-gray-600">{ticket.lotteryName}</TableCell>
-                    <TableCell className="text-gray-500">{ticket.purchaseDate}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          <TicketUnitsTable units={units} />
         </CardContent>
       </Card>
     </div>

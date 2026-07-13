@@ -19,14 +19,17 @@ create table if not exists lotteries (
 );
 
 create table if not exists tickets (
-  code         text not null,
-  phone        text not null,
-  lottery_id   uuid references lotteries(id) on delete cascade,
-  lottery_name text,
-  purchase_date date default current_date,
-  created_at   timestamptz default now(),
-  primary key  (code, lottery_id)
+  code               text not null,
+  phone              text not null,
+  lottery_id         uuid references lotteries(id) on delete cascade,
+  lottery_name       text,
+  purchase_date      date default current_date,
+  purchase_group_id  uuid,
+  created_at         timestamptz default now(),
+  primary key        (code, lottery_id)
 );
+
+alter table tickets add column if not exists purchase_group_id uuid;
 
 create table if not exists winners (
   id           uuid primary key default gen_random_uuid(),

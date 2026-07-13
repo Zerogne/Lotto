@@ -24,6 +24,8 @@ export interface Ticket {
   lotteryId: string;
   lotteryName: string;
   purchaseDate: string;
+  purchaseGroupId: string;
+  createdAt: string;
 }
 
 export interface Winner {
@@ -116,6 +118,8 @@ function makeTickets(lotteryId: string, lotteryName: string, lotteryIdx: number,
     lotteryId,
     lotteryName,
     purchaseDate: baseDate,
+    purchaseGroupId: gen6DigitCode(lotteryIdx, i),
+    createdAt: `${baseDate}T00:00:00Z`,
   }));
 }
 
@@ -179,6 +183,19 @@ export function formatDate(dateStr: string): string {
     year: "numeric",
     month: "long",
     day: "numeric",
+  });
+}
+
+export function formatDateTime(dateStr: string): string {
+  if (!dateStr) return "";
+  return new Date(dateStr).toLocaleString("mn-MN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
   });
 }
 

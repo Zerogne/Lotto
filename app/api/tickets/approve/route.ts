@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
 import { sendSMS } from "@/lib/sms";
 
+const CODES_PER_SMS = 20; // split into multiple SMS messages beyond 2 units' worth of codes
+
 export async function POST(req: NextRequest) {
   const { phone, lotteryId } = await req.json();
   if (!phone || !lotteryId) {
@@ -13,7 +15,7 @@ export async function POST(req: NextRequest) {
   // Only fetch tickets that are pending (not yet approved)
   const { data: tickets, error: fetchErr } = await db
     .from("tickets")
-    .select("id, code, status")
+    .select("id, code, status, purchase_group_id")
     .eq("phone", phone)
     .eq("lottery_id", lotteryId)
     .or("status.eq.pending,status.is.null");
@@ -25,7 +27,11 @@ export async function POST(req: NextRequest) {
   const ids = tickets.map((t: { id: string }) => t.id);
   await db.from("tickets").update({ status: "paid" }).in("id", ids);
 
-  // Now that they're paid, count them toward the lottery's sold total.
+  // Now that they're paid, count the purchased units (not individual codes) toward the lottery's sold total.
+  const unitsApproved = new Set(
+    tickets.map((t: { purchase_group_id: string | null; code: string }) => t.purchase_group_id ?? t.code)
+  ).size;
+
   const { data: lottery } = await db
     .from("lotteries")
     .select("tickets_sold")
@@ -34,16 +40,27 @@ export async function POST(req: NextRequest) {
   if (lottery) {
     await db
       .from("lotteries")
-      .update({ tickets_sold: lottery.tickets_sold + tickets.length })
+      .update({ tickets_sold: lottery.tickets_sold + unitsApproved })
       .eq("id", lotteryId);
   }
 
   const codes = tickets.map((t: { code: string }) => t.code);
-  const message = `BLCK: ${codes.join(",")}`;
-  console.log(`[Approve] phone=${phone} codes=${codes.join(",")} message="${message}"`);
+  console.log(`[Approve] phone=${phone} codes=${codes.join(",")}`);
 
-  const sms = await sendSMS(phone, message);
+  const chunks: string[][] = [];
+  for (let i = 0; i < codes.length; i += CODES_PER_SMS) chunks.push(codes.slice(i, i + CODES_PER_SMS));
+
+  let smsOk = true;
+  const failures: string[] = [];
+  for (const chunk of chunks) {
+    const result = await sendSMS(phone, `BLCK: ${chunk.join(",")}`);
+    if (!result.ok) {
+      smsOk = false;
+      if (result.detail) failures.push(result.detail);
+    }
+  }
+  const sms = { ok: smsOk, detail: failures.length ? failures.join("; ") : undefined };
   console.log(`[Approve] SMS result:`, JSON.stringify(sms));
 
-  return NextResponse.json({ approved: tickets.length, codes, sms });
+  return NextResponse.json({ approved: unitsApproved, codes, sms });
 }
