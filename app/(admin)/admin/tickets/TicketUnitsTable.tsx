@@ -55,10 +55,10 @@ export default function TicketUnitsTable({ groups }: { groups: TicketGroup[] }) 
           <TableRow>
             <TableHead>Ширхэг</TableHead>
             <TableHead>Утас</TableHead>
-            <TableHead>Сугалааны нэр</TableHead>
-            <TableHead>Кодууд</TableHead>
-            <TableHead>Нийт үнэ</TableHead>
-            <TableHead>Сүүлд авсан</TableHead>
+            <TableHead>Сугалааны Нэр</TableHead>
+            <TableHead>Сугалааны Код</TableHead>
+            <TableHead>Нийт Үнэ</TableHead>
+            <TableHead>Цаг</TableHead>
             <TableHead />
           </TableRow>
         </TableHeader>
@@ -68,7 +68,18 @@ export default function TicketUnitsTable({ groups }: { groups: TicketGroup[] }) 
               <TableCell className="text-gray-500 tabular-nums">{group.unitsCount}</TableCell>
               <TableCell className="text-gray-600 font-mono whitespace-nowrap">{group.phone}</TableCell>
               <TableCell className="text-gray-600 whitespace-nowrap">{group.lotteryName}</TableCell>
-              <TableCell className="text-gray-900 font-mono text-xs">{group.codes.join(", ")}</TableCell>
+              <TableCell className="text-gray-900">
+                <div className="flex flex-wrap gap-1 max-w-[220px]">
+                  {group.codes.map((code) => (
+                    <span
+                      key={code}
+                      className="font-mono text-[11px] bg-gray-100 rounded px-1.5 py-0.5 whitespace-nowrap"
+                    >
+                      {code}
+                    </span>
+                  ))}
+                </div>
+              </TableCell>
               <TableCell className="text-gray-600 whitespace-nowrap">{formatMNT(group.totalPrice)}</TableCell>
               <TableCell className="text-gray-500 whitespace-nowrap">{formatDateTime(group.lastPurchasedAt)}</TableCell>
               <TableCell>

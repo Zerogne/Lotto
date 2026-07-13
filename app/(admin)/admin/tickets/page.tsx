@@ -73,13 +73,12 @@ export default async function TicketsPage() {
       {/* Summary by lottery */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         {lotteries.map((lottery) => {
-          const codesCount = allTickets.filter((t) => t.lotteryId === lottery.id).length;
           return (
             <Card key={lottery.id}>
               <CardContent className="p-4">
                 <p className="font-medium text-gray-900 text-sm mb-1 truncate">{lottery.carName}</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-gray-900">{codesCount}</span>
+                  <span className="text-2xl font-bold text-gray-900">{lottery.ticketsSold}</span>
                   <Badge
                     variant={lottery.status === "active" ? "success" : "outline"}
                     className="text-xs"
