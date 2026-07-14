@@ -1,7 +1,7 @@
 import { getLotteries, getTickets } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TicketGroup } from "./TicketUnitsTable";
+import { buildTicketGroups } from "@/lib/ticketGroups";
 import TicketsSearch from "./TicketsSearch";
 import ManualTicketAdd from "./ManualTicketAdd";
 
@@ -10,45 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function TicketsPage() {
   const [lotteries, allTickets] = await Promise.all([getLotteries(), getTickets()]);
 
-  const priceByLotteryId = new Map(lotteries.map((l) => [l.id, l.ticketPrice]));
-
-  const groupMap = new Map<string, TicketGroup & { unitIds: Set<string> }>();
-  for (const t of allTickets) {
-    const key = `${t.phone}-${t.lotteryId}`;
-    const existing = groupMap.get(key);
-    if (existing) {
-      existing.codes.push(t.code);
-      existing.unitIds.add(t.purchaseGroupId);
-      if (t.createdAt > existing.lastPurchasedAt) existing.lastPurchasedAt = t.createdAt;
-    } else {
-      groupMap.set(key, {
-        phone: t.phone,
-        lotteryId: t.lotteryId,
-        lotteryName: t.lotteryName,
-        codes: [t.code],
-        unitsCount: 0,
-        totalPrice: 0,
-        lastPurchasedAt: t.createdAt,
-        unitIds: new Set([t.purchaseGroupId]),
-      });
-    }
-  }
-
-  const groups = Array.from(groupMap.values())
-    .map((g) => {
-      const unitsCount = g.unitIds.size;
-      const price = priceByLotteryId.get(g.lotteryId) ?? 0;
-      return {
-        phone: g.phone,
-        lotteryId: g.lotteryId,
-        lotteryName: g.lotteryName,
-        codes: g.codes,
-        unitsCount,
-        totalPrice: price * unitsCount,
-        lastPurchasedAt: g.lastPurchasedAt,
-      };
-    })
-    .sort((a, b) => b.lastPurchasedAt.localeCompare(a.lastPurchasedAt));
+  const groups = buildTicketGroups(lotteries, allTickets);
 
   return (
     <div>

@@ -4,17 +4,10 @@ import { useState } from "react";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { formatDateTime, formatMNT } from "@/lib/mock-data";
+import { TicketGroup } from "@/lib/ticketGroups";
 import { Trash2, Loader2 } from "lucide-react";
 
-export interface TicketGroup {
-  phone: string;
-  lotteryId: string;
-  lotteryName: string;
-  codes: string[];
-  unitsCount: number;
-  totalPrice: number;
-  lastPurchasedAt: string;
-}
+export type { TicketGroup };
 
 export default function TicketUnitsTable({ groups }: { groups: TicketGroup[] }) {
   const [rows, setRows] = useState(groups);

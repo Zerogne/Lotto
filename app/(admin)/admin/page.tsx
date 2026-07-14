@@ -1,7 +1,8 @@
 import { getLotteries, getTickets, getTotalRevenue } from "@/lib/db";
 import { formatMNT } from "@/lib/mock-data";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { buildTicketGroups } from "@/lib/ticketGroups";
+import { Card, CardContent } from "@/components/ui/card";
+import TicketsSearch from "./tickets/TicketsSearch";
 import { Car, Ticket, TrendingUp, Activity } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +46,7 @@ export default async function AdminDashboard() {
     },
   ];
 
-  const recentTickets = tickets.slice(0, 10);
+  const groups = buildTicketGroups(lotteries, tickets);
 
   return (
     <div>
@@ -70,37 +71,7 @@ export default async function AdminDashboard() {
         ))}
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Сүүлийн үйл ажиллагаа</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {recentTickets.length === 0 ? (
-            <p className="text-center text-sm text-gray-400 py-10">Тасалбар байхгүй байна</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Тасалбарын код</TableHead>
-                  <TableHead>Утас</TableHead>
-                  <TableHead>Сугалаа</TableHead>
-                  <TableHead>Огноо</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentTickets.map((ticket, i) => (
-                  <TableRow key={`${ticket.code}-${i}`}>
-                    <TableCell className="font-mono font-medium text-gray-900">{ticket.code}</TableCell>
-                    <TableCell className="text-gray-600">{ticket.phone}</TableCell>
-                    <TableCell className="text-gray-600">{ticket.lotteryName}</TableCell>
-                    <TableCell className="text-gray-500">{ticket.purchaseDate}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <TicketsSearch groups={groups} />
     </div>
   );
 }
