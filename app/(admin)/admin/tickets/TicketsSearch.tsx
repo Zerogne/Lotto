@@ -19,7 +19,7 @@ export default function TicketsSearch({ groups }: { groups: TicketGroup[] }) {
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <CardTitle className="text-base">Тасалбарын жагсаалт</CardTitle>
+          <CardTitle className="text-base">Сугалааны жагсаалт</CardTitle>
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
