@@ -49,7 +49,7 @@ create table if not exists sms_logs (
   message            text not null,
   ok                 boolean not null,
   detail             text,
-  lottery_id         uuid references lotteries(id) on delete set null,
+  lottery_id         text references lotteries(id) on delete set null,
   purchase_group_id  uuid,
   created_at         timestamptz default now()
 );

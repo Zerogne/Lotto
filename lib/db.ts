@@ -74,19 +74,32 @@ export async function getActiveLotteries(): Promise<Lottery[]> {
   return (data ?? []).map(mapLottery);
 }
 
+const SUPABASE_PAGE_SIZE = 1000; // PostgREST caps unbounded selects at 1000 rows
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchAllRows(db: ReturnType<typeof createAdminClient>, build: (query: any) => any): Promise<any[]> {
+  const rows: unknown[] = [];
+  let from = 0;
+  for (;;) {
+    const { data, error } = await build(db.from("tickets").select("*")).range(from, from + SUPABASE_PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+    rows.push(...(data ?? []));
+    if (!data || data.length < SUPABASE_PAGE_SIZE) break;
+    from += SUPABASE_PAGE_SIZE;
+  }
+  return rows;
+}
+
 export async function getTickets(): Promise<Ticket[]> {
   const db = createAdminClient();
-  const { data } = await db
-    .from("tickets")
-    .select("*")
-    .order("created_at", { ascending: false });
-  return (data ?? []).map(mapTicket);
+  const rows = await fetchAllRows(db, (q) => q.order("created_at", { ascending: false }));
+  return rows.map(mapTicket);
 }
 
 export async function getTicketsByLottery(lotteryId: string): Promise<Ticket[]> {
   const db = createAdminClient();
-  const { data } = await db.from("tickets").select("*").eq("lottery_id", lotteryId);
-  return (data ?? []).map(mapTicket);
+  const rows = await fetchAllRows(db, (q) => q.eq("lottery_id", lotteryId));
+  return rows.map(mapTicket);
 }
 
 export async function findTicketsByPhone(

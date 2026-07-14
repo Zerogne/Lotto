@@ -31,10 +31,23 @@ function isUniqueViolation(error: unknown): boolean {
   return msg.includes("duplicate key") || msg.includes("tickets_pkey");
 }
 
+const SUPABASE_PAGE_SIZE = 1000; // PostgREST caps unbounded selects at 1000 rows
+
 async function fetchExistingCodes(db: Db, lotteryId: string): Promise<Set<string>> {
-  const { data, error } = await db.from("tickets").select("code").eq("lottery_id", lotteryId);
-  if (error) throw new Error(error.message);
-  return new Set((data ?? []).map((row: { code: string }) => row.code));
+  const codes = new Set<string>();
+  let from = 0;
+  for (;;) {
+    const { data, error } = await db
+      .from("tickets")
+      .select("code")
+      .eq("lottery_id", lotteryId)
+      .range(from, from + SUPABASE_PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+    for (const row of data ?? []) codes.add((row as { code: string }).code);
+    if (!data || data.length < SUPABASE_PAGE_SIZE) break;
+    from += SUPABASE_PAGE_SIZE;
+  }
+  return codes;
 }
 
 function generateUniqueCodes(count: number, existing: Set<string>): string[] {
