@@ -64,11 +64,12 @@ export default function ManualTicketAdd() {
       return;
     }
     const codes = (data.tickets ?? []).map((t: { code: string }) => t.code);
-    if (!data.sms?.ok) {
-      setManualMsg({ text: `✓ Нэмэгдлээ (${codes.join(",")}) — SMS алдаа: ${data.sms?.detail ?? "тодорхойгүй"}`, ok: false });
-    } else {
-      setManualMsg({ text: `✓ SMS илгээгдлээ → ${manualPhone} (${codes.join(",")})`, ok: true });
-    }
+    setManualMsg({
+      text: data.smsQueued
+        ? `✓ Нэмэгдлээ, SMS илгээгдэж байна → ${manualPhone} (${codes.join(",")})`
+        : `✓ Нэмэгдлээ (${codes.join(",")})`,
+      ok: true,
+    });
     setManualPhone("");
     setManualQty("1");
     router.refresh();

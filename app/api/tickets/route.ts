@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
 import { isAdminRequest } from "@/lib/adminAuth";
 import { sendSMS } from "@/lib/sms";
@@ -171,18 +171,22 @@ export async function POST(req: NextRequest) {
 
   // Only count toward tickets_sold once actually paid (pending tickets don't reserve a slot).
   // tickets_sold tracks purchased units, not individual codes.
-  let sms: { ok: boolean; detail?: string } | undefined;
+  let smsQueued = false;
   if (isPaid) {
     await db
       .from("lotteries")
       .update({ tickets_sold: lottery.tickets_sold + quantity })
       .eq("id", body.lotteryId);
 
+    // Send SMS after the response is flushed so ticket creation (and the admin
+    // table refresh) isn't blocked by SMS retries — failures are still tracked
+    // in sms_logs / visible on /admin/sms-failures.
     const codes = tickets.map((t) => t.code);
-    sms = await sendChunkedSMS(body.phone, codes, body.lotteryId);
+    after(() => sendChunkedSMS(body.phone, codes, body.lotteryId));
+    smsQueued = true;
   }
 
-  return NextResponse.json({ tickets: data, sms }, { status: 201 });
+  return NextResponse.json({ tickets: data, smsQueued }, { status: 201 });
 }
 
 async function sendChunkedSMS(
