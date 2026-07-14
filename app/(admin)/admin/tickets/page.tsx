@@ -57,10 +57,6 @@ export default async function TicketsPage() {
         <p className="text-sm text-gray-500">Нийт {allTickets.length} код</p>
       </div>
 
-      <div className="mb-6">
-        <TicketsSearch groups={groups} />
-      </div>
-
       <div className="flex flex-col lg:flex-row gap-4 mb-6 items-stretch">
         <div className="lg:w-[420px] shrink-0">
           <ManualTicketAdd />
@@ -94,6 +90,8 @@ export default async function TicketsPage() {
           )}
         </div>
       </div>
+
+      <TicketsSearch groups={groups} />
     </div>
   );
 }
