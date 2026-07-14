@@ -1,4 +1,4 @@
-import { getLotteries, getTickets, getTotalRevenue } from "@/lib/db";
+import { getLotteries, getTickets } from "@/lib/db";
 import { formatMNT } from "@/lib/mock-data";
 import { buildTicketGroups } from "@/lib/ticketGroups";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,11 +8,10 @@ import { Car, Ticket, TrendingUp, Activity } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const [lotteries, tickets, revenue] = await Promise.all([
-    getLotteries(),
-    getTickets(),
-    getTotalRevenue(),
-  ]);
+  const [lotteries, tickets] = await Promise.all([getLotteries(), getTickets()]);
+
+  const totalUnitsSold = lotteries.reduce((sum, l) => sum + l.ticketsSold, 0);
+  const totalRevenue = lotteries.reduce((sum, l) => sum + l.ticketsSold * l.ticketPrice, 0);
 
   const stats = [
     {
@@ -31,14 +30,14 @@ export default async function AdminDashboard() {
     },
     {
       label: "Нийт тасалбар",
-      value: tickets.length,
+      value: totalUnitsSold,
       icon: Ticket,
       color: "text-amber-600",
       bg: "bg-amber-50",
     },
     {
       label: "Нийт орлого",
-      value: formatMNT(revenue),
+      value: formatMNT(totalRevenue),
       icon: TrendingUp,
       color: "text-purple-600",
       bg: "bg-purple-50",
