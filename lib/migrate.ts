@@ -39,12 +39,24 @@ create table if not exists winners (
   created_at   timestamptz default now()
 );
 
+create table if not exists sms_logs (
+  id                 uuid primary key default gen_random_uuid(),
+  phone              text not null,
+  message            text not null,
+  ok                 boolean not null,
+  detail             text,
+  lottery_id         uuid references lotteries(id) on delete set null,
+  purchase_group_id  uuid,
+  created_at         timestamptz default now()
+);
+
 alter table lotteries add column if not exists car_images text[] default '{}';
 alter table tickets add column if not exists purchase_group_id uuid;
 
 alter table lotteries disable row level security;
 alter table tickets   disable row level security;
 alter table winners   disable row level security;
+alter table sms_logs  disable row level security;
 `;
 
 export { SCHEMA_SQL };

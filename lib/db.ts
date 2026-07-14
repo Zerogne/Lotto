@@ -109,6 +109,49 @@ export async function getWinners(): Promise<Winner[]> {
   return (data ?? []).map(mapWinner);
 }
 
+export interface SmsLog {
+  id: string;
+  phone: string;
+  message: string;
+  ok: boolean;
+  detail?: string;
+  lotteryId?: string;
+  createdAt: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapSmsLog(r: any): SmsLog {
+  return {
+    id: r.id,
+    phone: r.phone,
+    message: r.message,
+    ok: r.ok,
+    detail: r.detail ?? undefined,
+    lotteryId: r.lottery_id ?? undefined,
+    createdAt: r.created_at ?? "",
+  };
+}
+
+// Returns only messages whose most recent send attempt failed — if a phone+message
+// pair was later resent successfully, it's excluded.
+export async function getFailedSmsLogs(): Promise<SmsLog[]> {
+  const db = createAdminClient();
+  const { data } = await db
+    .from("sms_logs")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  const latestByKey = new Map<string, SmsLog>();
+  for (const row of data ?? []) {
+    const log = mapSmsLog(row);
+    latestByKey.set(`${log.phone}::${log.message}`, log);
+  }
+
+  return Array.from(latestByKey.values())
+    .filter((log) => !log.ok)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
 export async function getTotalRevenue(): Promise<number> {
   const db = createAdminClient();
   const { data } = await db.from("tickets").select("lottery_id");

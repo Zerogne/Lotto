@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   let smsOk = true;
   const failures: string[] = [];
   for (const chunk of chunks) {
-    const result = await sendSMS(phone, `BLCK: ${chunk.join(",")}`);
+    const result = await sendSMS(phone, `BLCK: ${chunk.join(",")}`, { lotteryId });
     if (!result.ok) {
       smsOk = false;
       if (result.detail) failures.push(result.detail);

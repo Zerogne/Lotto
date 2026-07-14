@@ -166,13 +166,17 @@ export async function POST(req: NextRequest) {
       .eq("id", body.lotteryId);
 
     const codes = tickets.map((t) => t.code);
-    sms = await sendChunkedSMS(body.phone, codes);
+    sms = await sendChunkedSMS(body.phone, codes, body.lotteryId);
   }
 
   return NextResponse.json({ tickets: data, sms }, { status: 201 });
 }
 
-async function sendChunkedSMS(phone: string, codes: string[]): Promise<{ ok: boolean; detail?: string }> {
+async function sendChunkedSMS(
+  phone: string,
+  codes: string[],
+  lotteryId: string
+): Promise<{ ok: boolean; detail?: string }> {
   const chunks: string[][] = [];
   for (let i = 0; i < codes.length; i += CODES_PER_SMS) {
     chunks.push(codes.slice(i, i + CODES_PER_SMS));
@@ -182,7 +186,7 @@ async function sendChunkedSMS(phone: string, codes: string[]): Promise<{ ok: boo
   const failures: string[] = [];
   for (const chunk of chunks) {
     const message = `BLCK: ${chunk.join(",")}`;
-    const result = await sendSMS(phone, message);
+    const result = await sendSMS(phone, message, { lotteryId });
     if (!result.ok) {
       ok = false;
       if (result.detail) failures.push(result.detail);

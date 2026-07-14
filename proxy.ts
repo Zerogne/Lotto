@@ -11,6 +11,8 @@ function isProtectedApiRequest(pathname: string, method: string): boolean {
     (pathname === "/api/pending" && method === "GET") ||
     (pathname === "/api/tickets" && method === "GET") ||
     (pathname === "/api/tickets/export" && method === "GET") ||
+    (pathname === "/api/sms/failed" && method === "GET") ||
+    (pathname === "/api/sms/resend" && method === "POST") ||
     (pathname === "/api/upload/sign" && method === "POST") ||
     (pathname === "/api/setup" && method === "POST") ||
     (pathname === "/api/winners" && method === "GET")
