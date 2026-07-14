@@ -1,7 +1,8 @@
 import { getLotteries, getTickets } from "@/lib/db";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import TicketUnitsTable, { TicketGroup } from "./TicketUnitsTable";
+import { TicketGroup } from "./TicketUnitsTable";
+import TicketsSearch from "./TicketsSearch";
 import ManualTicketAdd from "./ManualTicketAdd";
 
 export const dynamic = "force-dynamic";
@@ -56,6 +57,10 @@ export default async function TicketsPage() {
         <p className="text-sm text-gray-500">Нийт {allTickets.length} код</p>
       </div>
 
+      <div className="mb-6">
+        <TicketsSearch groups={groups} />
+      </div>
+
       <div className="flex flex-col lg:flex-row gap-4 mb-6 items-stretch">
         <div className="lg:w-[420px] shrink-0">
           <ManualTicketAdd />
@@ -89,15 +94,6 @@ export default async function TicketsPage() {
           )}
         </div>
       </div>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Тасалбарын жагсаалт</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <TicketUnitsTable groups={groups} />
-        </CardContent>
-      </Card>
     </div>
   );
 }
