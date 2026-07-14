@@ -49,10 +49,13 @@ create table if not exists sms_logs (
   message            text not null,
   ok                 boolean not null,
   detail             text,
+  sms_id             text,
   lottery_id         text references lotteries(id) on delete set null,
   purchase_group_id  uuid,
   created_at         timestamptz default now()
 );
+
+alter table sms_logs add column if not exists sms_id text;
 
 -- Disable Row Level Security so service_role key has full access from the API
 alter table lotteries disable row level security;

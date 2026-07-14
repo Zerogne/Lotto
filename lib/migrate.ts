@@ -45,10 +45,13 @@ create table if not exists sms_logs (
   message            text not null,
   ok                 boolean not null,
   detail             text,
+  sms_id             text,
   lottery_id         text references lotteries(id) on delete set null,
   purchase_group_id  uuid,
   created_at         timestamptz default now()
 );
+
+alter table sms_logs add column if not exists sms_id text;
 
 alter table lotteries add column if not exists car_images text[] default '{}';
 alter table tickets add column if not exists purchase_group_id uuid;

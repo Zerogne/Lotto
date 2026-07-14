@@ -16,10 +16,12 @@ export interface SmsMeta {
 
 // Best-effort audit log so failed sends can be found and resent later. Never
 // throws — a logging failure must not affect whether the SMS send is reported as ok.
+// smsId (EasySendSMS's own message id) is stored so the /api/sms/dlr webhook can
+// later update this row once the carrier reports final delivery status.
 async function logSmsAttempt(
   phone: string,
   message: string,
-  result: { ok: boolean; detail?: string },
+  result: { ok: boolean; detail?: string; smsId?: string },
   meta?: SmsMeta
 ) {
   try {
@@ -29,6 +31,7 @@ async function logSmsAttempt(
       message,
       ok: result.ok,
       detail: result.detail ?? null,
+      sms_id: result.smsId ?? null,
       lottery_id: meta?.lotteryId ?? null,
       purchase_group_id: meta?.purchaseGroupId ?? null,
     });
@@ -37,7 +40,10 @@ async function logSmsAttempt(
   }
 }
 
-async function sendSMSOnce(phone: string, message: string): Promise<{ ok: boolean; detail?: string }> {
+async function sendSMSOnce(
+  phone: string,
+  message: string
+): Promise<{ ok: boolean; detail?: string; smsId?: string }> {
   if (!EASYSENDSMS_API_KEY) {
     console.log(`[SMS mock] To: ${phone} | ${message}`);
     return { ok: false, detail: "EASYSENDSMS_API_KEY not set" };
@@ -68,7 +74,11 @@ async function sendSMSOnce(phone: string, message: string): Promise<{ ok: boolea
     if (!res.ok || data.error) {
       return { ok: false, detail: JSON.stringify(data) };
     }
-    return { ok: true };
+
+    // Success response looks like: { status: "OK", messageIds: ["OK: <uuid>", ...] }
+    const firstId: string | undefined = data.messageIds?.[0];
+    const smsId = firstId?.startsWith("OK: ") ? firstId.slice(4) : undefined;
+    return { ok: true, smsId };
   } catch (err) {
     console.error("[SMS] fetch failed:", err);
     return { ok: false, detail: String(err) };
@@ -84,7 +94,7 @@ export async function sendSMS(
   message: string,
   meta?: SmsMeta
 ): Promise<{ ok: boolean; detail?: string }> {
-  let lastResult: { ok: boolean; detail?: string } = { ok: false, detail: "not attempted" };
+  let lastResult: { ok: boolean; detail?: string; smsId?: string } = { ok: false, detail: "not attempted" };
 
   for (let attempt = 1; attempt <= SMS_MAX_ATTEMPTS; attempt++) {
     lastResult = await sendSMSOnce(phone, message);
