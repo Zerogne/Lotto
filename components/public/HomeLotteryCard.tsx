@@ -1,13 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
-import { ChevronRight, Ticket, Trophy, CalendarDays } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import type { Lottery } from "@/lib/mock-data";
 import { formatMNT } from "@/lib/mock-data";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import CountdownTimer from "./CountdownTimer";
-import LotteryImageGallery from "./LotteryImageGallery";
 
 interface Props {
   lottery: Lottery;
@@ -16,80 +15,10 @@ interface Props {
 
 export default function HomeLotteryCard({ lottery, featured = false }: Props) {
   const [imageOk, setImageOk] = useState(true);
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const active = lottery.status === "active";
   const pct = Math.min(
     100,
     lottery.maxTickets > 0 ? (lottery.ticketsSold / lottery.maxTickets) * 100 : 0
-  );
-
-  const detailsModal = (
-    <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-black uppercase tracking-wide text-[#162032]">
-            {lottery.carName}
-          </DialogTitle>
-          <DialogDescription className="sr-only">Сугалааны дэлгэрэнгүй мэдээлэл</DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-5">
-          <LotteryImageGallery
-            images={lottery.carImages.filter((src) => src !== "/images/car-placeholder.svg")}
-            video={lottery.carVideo}
-            alt={`${lottery.carBrand} ${lottery.carModel}`}
-          />
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-2xl bg-slate-50 border border-slate-100 p-3 text-center">
-              <Ticket className="h-4 w-4 text-amber-500 mx-auto mb-1" />
-              <p className="text-xs text-slate-500 font-medium">Тасалбарын үнэ</p>
-              <p className="text-sm font-black text-slate-800 mt-0.5">{formatMNT(lottery.ticketPrice)}</p>
-            </div>
-            <div className="rounded-2xl bg-slate-50 border border-slate-100 p-3 text-center">
-              <Trophy className="h-4 w-4 text-amber-500 mx-auto mb-1" />
-              <p className="text-xs text-slate-500 font-medium">Нийт тасалбар</p>
-              <p className="text-sm font-black text-slate-800 mt-0.5">{lottery.maxTickets.toLocaleString()}</p>
-            </div>
-            <div className="rounded-2xl bg-slate-50 border border-slate-100 p-3 text-center">
-              <CalendarDays className="h-4 w-4 text-amber-500 mx-auto mb-1" />
-              <p className="text-xs text-slate-500 font-medium">Дуусах огноо</p>
-              <p className="text-sm font-black text-slate-800 mt-0.5">{lottery.endDate}</p>
-            </div>
-          </div>
-
-          {active && (
-            <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4">
-              <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
-                <span className="text-amber-600">{Math.round(pct)}%</span>
-              </div>
-              <div className="h-3 overflow-hidden rounded-full bg-slate-200">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 transition-[width] duration-500"
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-            </div>
-          )}
-
-          {active && (
-            <div className="rounded-2xl bg-[#0c1222] p-5 flex flex-col items-center gap-3">
-              <p className="text-white/50 text-xs uppercase tracking-widest font-semibold">Дуусах хугацаа</p>
-              <CountdownTimer endDate={lottery.endDate} />
-            </div>
-          )}
-
-          {lottery.description && (
-            <div>
-              <h2 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-2">
-                Дэлгэрэнгүй мэдээлэл
-              </h2>
-              <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-line">{lottery.description}</p>
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 
   if (featured) {
@@ -154,15 +83,13 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
             </>
           )}
 
-          <button
-            onClick={() => setDetailsOpen(true)}
+          <Link
+            href={`/lottery/${lottery.id}`}
             className="mt-4 flex w-full items-center justify-center gap-1 rounded-xl border-2 border-amber-400 text-amber-600 hover:bg-amber-50 font-black text-sm uppercase tracking-widest py-3 transition-colors"
           >
             Дэлгэрэнгүй <ChevronRight className="size-4" strokeWidth={2.5} />
-          </button>
+          </Link>
         </div>
-
-        {detailsModal}
       </div>
     );
   }
@@ -225,14 +152,12 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
         )}
       </div>
 
-      <button
-        onClick={() => setDetailsOpen(true)}
+      <Link
+        href={`/lottery/${lottery.id}`}
         className="flex shrink-0 items-center gap-0.5 self-center rounded-lg pl-1 text-xs font-bold text-amber-600 hover:text-amber-700"
       >
         Дэлгэрэнгүй <ChevronRight className="size-4" strokeWidth={2.5} />
-      </button>
-
-      {detailsModal}
+      </Link>
     </div>
   );
 }
