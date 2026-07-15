@@ -107,11 +107,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // One purchase_group_id per POST call (not per unit) — this is what lets the
+  // admin tickets table treat everything added in a single "Гараар нэмэх" action
+  // as one row, while two separate add actions (even same phone/lottery) stay split.
   function buildTickets(codes: string[]) {
+    const purchaseGroupId = crypto.randomUUID();
     const rows = [];
     let codeIdx = 0;
     for (let i = 0; i < quantity; i++) {
-      const purchaseGroupId = crypto.randomUUID();
       for (let j = 0; j < CODES_PER_TICKET; j++) {
         rows.push({
           code: codes[codeIdx++],

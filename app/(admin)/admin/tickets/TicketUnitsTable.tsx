@@ -28,7 +28,7 @@ export default function TicketUnitsTable({ groups }: { groups: TicketGroup[] }) 
   }, [page]);
 
   function keyOf(g: TicketGroup) {
-    return `${g.phone}-${g.lotteryId}`;
+    return g.purchaseGroupId;
   }
 
   async function refund(group: TicketGroup) {
@@ -38,7 +38,11 @@ export default function TicketUnitsTable({ groups }: { groups: TicketGroup[] }) 
     const res = await fetch("/api/tickets/refund", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: group.phone, lotteryId: group.lotteryId }),
+      body: JSON.stringify({
+        phone: group.phone,
+        lotteryId: group.lotteryId,
+        purchaseGroupId: group.purchaseGroupId,
+      }),
     });
     setRefunding(null);
     if (!res.ok) {

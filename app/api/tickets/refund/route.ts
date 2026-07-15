@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
-  const { phone, lotteryId } = await req.json();
-  if (!phone || !lotteryId) {
-    return NextResponse.json({ error: "phone and lotteryId required" }, { status: 400 });
+  const { phone, lotteryId, purchaseGroupId } = await req.json();
+  if (!phone || !lotteryId || !purchaseGroupId) {
+    return NextResponse.json({ error: "phone, lotteryId and purchaseGroupId required" }, { status: 400 });
   }
 
   const db = createAdminClient();
@@ -13,7 +13,8 @@ export async function POST(req: NextRequest) {
     .from("tickets")
     .select("id, status, purchase_group_id, code")
     .eq("lottery_id", lotteryId)
-    .eq("phone", phone);
+    .eq("phone", phone)
+    .eq("purchase_group_id", purchaseGroupId);
 
   if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 });
   if (!tickets?.length) return NextResponse.json({ error: "No tickets found" }, { status: 404 });

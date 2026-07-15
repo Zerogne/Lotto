@@ -1,6 +1,9 @@
 import type { Lottery, Ticket } from "./mock-data";
 
+const CODES_PER_TICKET = 10; // 1 purchased unit = 10 lottery codes
+
 export interface TicketGroup {
+  purchaseGroupId: string;
   phone: string;
   lotteryId: string;
   lotteryName: string;
@@ -10,19 +13,22 @@ export interface TicketGroup {
   lastPurchasedAt: string;
 }
 
+// Groups by purchase_group_id (one per admin "Гараар нэмэх" action) so two
+// separate purchases by the same phone/lottery stay as separate rows, while
+// units bought together in one action still merge into a single row.
 export function buildTicketGroups(lotteries: Lottery[], tickets: Ticket[]): TicketGroup[] {
   const priceByLotteryId = new Map(lotteries.map((l) => [l.id, l.ticketPrice]));
 
-  const groupMap = new Map<string, TicketGroup & { unitIds: Set<string> }>();
+  const groupMap = new Map<string, TicketGroup>();
   for (const t of tickets) {
-    const key = `${t.phone}-${t.lotteryId}`;
+    const key = t.purchaseGroupId;
     const existing = groupMap.get(key);
     if (existing) {
       existing.codes.push(t.code);
-      existing.unitIds.add(t.purchaseGroupId);
       if (t.createdAt > existing.lastPurchasedAt) existing.lastPurchasedAt = t.createdAt;
     } else {
       groupMap.set(key, {
+        purchaseGroupId: t.purchaseGroupId,
         phone: t.phone,
         lotteryId: t.lotteryId,
         lotteryName: t.lotteryName,
@@ -30,24 +36,15 @@ export function buildTicketGroups(lotteries: Lottery[], tickets: Ticket[]): Tick
         unitsCount: 0,
         totalPrice: 0,
         lastPurchasedAt: t.createdAt,
-        unitIds: new Set([t.purchaseGroupId]),
       });
     }
   }
 
   return Array.from(groupMap.values())
     .map((g) => {
-      const unitsCount = g.unitIds.size;
+      const unitsCount = Math.max(1, Math.round(g.codes.length / CODES_PER_TICKET));
       const price = priceByLotteryId.get(g.lotteryId) ?? 0;
-      return {
-        phone: g.phone,
-        lotteryId: g.lotteryId,
-        lotteryName: g.lotteryName,
-        codes: g.codes,
-        unitsCount,
-        totalPrice: price * unitsCount,
-        lastPurchasedAt: g.lastPurchasedAt,
-      };
+      return { ...g, unitsCount, totalPrice: price * unitsCount };
     })
     .sort((a, b) => b.lastPurchasedAt.localeCompare(a.lastPurchasedAt));
 }

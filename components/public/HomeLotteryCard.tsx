@@ -1,9 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
 import type { Lottery } from "@/lib/mock-data";
 import { formatMNT } from "@/lib/mock-data";
 import CountdownTimer from "./CountdownTimer";
@@ -23,10 +21,7 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
 
   if (featured) {
     return (
-      <Link
-        href={`/lottery/${lottery.id}`}
-        className="group relative block rounded-3xl border border-slate-200/90 bg-gradient-to-br from-slate-50 to-white shadow-md shadow-slate-200/50 outline-none ring-amber-400/0 transition-all hover:border-amber-300/70 hover:shadow-xl hover:ring-4 hover:ring-amber-400/20 focus-visible:ring-amber-400/30 overflow-hidden"
-      >
+      <div className="group relative block rounded-3xl border border-slate-200/90 bg-gradient-to-br from-slate-50 to-white shadow-md shadow-slate-200/50 overflow-hidden">
         {/* Badge */}
         <div className="absolute top-4 left-4 z-10">
           <span className="inline-block bg-amber-500 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow">
@@ -82,22 +77,16 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
 
               <div className="flex items-center justify-between">
                 <CountdownTimer endDate={lottery.endDate} compact />
-                <span className="flex items-center gap-1 text-sm font-bold text-amber-600 group-hover:translate-x-0.5 transition-transform">
-                  Авах <ChevronRight className="size-4" strokeWidth={2.5} />
-                </span>
               </div>
             </>
           )}
         </div>
-      </Link>
+      </div>
     );
   }
 
   return (
-    <Link
-      href={`/lottery/${lottery.id}`}
-      className="group relative flex gap-3.5 rounded-2xl border border-slate-200/90 bg-gradient-to-br from-slate-50 to-white px-3.5 py-3 shadow-sm shadow-slate-200/40 outline-none ring-amber-400/0 transition-all hover:border-amber-300/70 hover:bg-amber-50/30 hover:shadow-md hover:ring-4 focus-visible:ring-amber-400/30 sm:gap-4 sm:p-4"
-    >
+    <div className="group relative flex gap-3.5 rounded-2xl border border-slate-200/90 bg-gradient-to-br from-slate-50 to-white px-3.5 py-3 shadow-sm shadow-slate-200/40 sm:gap-4 sm:p-4">
       <div
         className={`relative size-[4.5rem] shrink-0 overflow-hidden rounded-xl shadow-inner ring-1 ring-black/15 sm:size-[5rem] ${active ? "bg-gradient-to-br from-slate-800 to-[#0c1222]" : "bg-gradient-to-br from-slate-600 to-slate-900"}`}
       >
@@ -153,10 +142,6 @@ export default function HomeLotteryCard({ lottery, featured = false }: Props) {
           </p>
         )}
       </div>
-
-      <div className="flex shrink-0 items-center self-center pl-1 text-amber-500 transition-transform duration-200 group-hover:translate-x-0.5">
-        <ChevronRight className="size-6 sm:size-7" strokeWidth={2.25} aria-hidden />
-      </div>
-    </Link>
+    </div>
   );
 }
