@@ -23,8 +23,7 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
   const [selectedLotteryId, setSelectedLotteryId] = useState(initialLotteryId);
   const [quantity, setQuantity] = useState("1");
   const [successOpen, setSuccessOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ phone?: string; lottery?: string; quantity?: string; api?: string }>({});
+  const [errors, setErrors] = useState<{ phone?: string; lottery?: string; quantity?: string }>({});
 
   const selectedLottery = useMemo(
     () => lotteries.find((l) => l.id === selectedLotteryId) ?? lotteries[0],
@@ -42,22 +41,12 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
     return Object.keys(errs).length === 0;
   }
 
-  async function handleSubmit() {
+  // The public form is just an order-intent notice — no ticket/code is
+  // reserved here. The real record is created by an admin manually adding
+  // it (via "Гараар нэмэх") once they've verified the bank transfer.
+  function handleSubmit() {
     if (!validate()) return;
-    setLoading(true);
-    setErrors({});
-    const res = await fetch("/api/tickets", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone, lotteryId: selectedLottery?.id, quantity: qtyNum }),
-    });
-    setLoading(false);
-    if (res.ok) {
-      setSuccessOpen(true);
-    } else {
-      const data = await res.json();
-      setErrors({ api: data.error ?? "Алдаа гарлаа" });
-    }
+    setSuccessOpen(true);
   }
 
   return (
@@ -174,18 +163,14 @@ export default function TicketPurchaseClient({ lotteries, initialLotteryId }: Pr
           <p className="text-xs text-gray-500 mt-1">{formatMNT(selectedLottery?.ticketPrice ?? 0)} × {qtyNum} ширхэг</p>
         </div>
 
-        {errors.api && (
-          <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2 mt-4 text-center">{errors.api}</p>
-        )}
       </div>
 
       <div className="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-gray-200 px-4 py-3 lg:static lg:bg-transparent lg:border-0 lg:backdrop-blur-none lg:max-w-lg lg:mx-auto lg:w-full lg:pb-8">
         <button
           onClick={handleSubmit}
-          disabled={loading}
           className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-60 active:bg-amber-700 text-white font-black text-base uppercase tracking-widest py-4 rounded-xl transition-colors shadow-lg"
         >
-          {loading ? "Хадгалж байна..." : "Захиалга илгээх"}
+          Захиалга илгээх
         </button>
       </div>
 
