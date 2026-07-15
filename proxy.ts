@@ -8,6 +8,7 @@ function isProtectedApiRequest(pathname: string, method: string): boolean {
     (/^\/api\/draw\/[^/]+$/.test(pathname) && method === "POST") ||
     (pathname === "/api/tickets/approve" && method === "POST") ||
     (pathname === "/api/tickets/refund" && method === "POST") ||
+    (pathname === "/api/tickets/backfill-purchase-groups" && method === "POST") ||
     (pathname === "/api/pending" && method === "GET") ||
     (pathname === "/api/tickets" && method === "GET") ||
     (pathname === "/api/tickets/export" && method === "GET") ||

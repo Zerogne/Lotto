@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { buildTicketGroups } from "@/lib/ticketGroups";
 import TicketsSearch from "./TicketsSearch";
 import ManualTicketAdd from "./ManualTicketAdd";
+import BackfillButton from "./BackfillButton";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +15,12 @@ export default async function TicketsPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Бүх тасалбарууд</h1>
-        <p className="text-sm text-gray-500">Нийт {allTickets.length} код</p>
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Бүх тасалбарууд</h1>
+          <p className="text-sm text-gray-500">Нийт {allTickets.length} код</p>
+        </div>
+        <BackfillButton />
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4 mb-6 items-stretch">
