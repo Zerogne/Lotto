@@ -80,7 +80,7 @@ create index if not exists idx_tickets_created_at on tickets (created_at desc);
 -- collapse into a single group under a shared NULL key).
 create or replace view ticket_purchase_groups as
 select
-  coalesce(purchase_group_id, code) as purchase_group_id,
+  coalesce(purchase_group_id::text, code) as purchase_group_id,
   phone,
   lottery_id,
   lottery_name,
@@ -88,4 +88,8 @@ select
   count(*) as codes_count,
   max(created_at) as last_created_at
 from tickets
-group by coalesce(purchase_group_id, code), phone, lottery_id, lottery_name;
+group by coalesce(purchase_group_id::text, code), phone, lottery_id, lottery_name;
+
+-- Without this, the view runs with its creator's (elevated) permissions
+-- instead of the querying role's, bypassing RLS if it's ever re-enabled.
+alter view ticket_purchase_groups set (security_invoker = on);

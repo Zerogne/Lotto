@@ -1,5 +1,6 @@
 import { getFailedSmsLogs } from "@/lib/db";
 import FailedSmsTable from "./FailedSmsTable";
+import SmsTestSection from "./SmsTestSection";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export default async function SmsFailuresPage() {
         <h1 className="text-2xl font-bold text-gray-900">Илгээгүй мессежүүд</h1>
         <p className="text-sm text-gray-500">Нийт {logs.length} амжилтгүй мессеж</p>
       </div>
+      <SmsTestSection />
       <FailedSmsTable logs={logs} />
     </div>
   );
