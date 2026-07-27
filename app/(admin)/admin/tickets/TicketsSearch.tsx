@@ -1,19 +1,41 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import TicketUnitsTable, { TicketGroup } from "./TicketUnitsTable";
 
-export default function TicketsSearch({ groups }: { groups: TicketGroup[] }) {
-  const [search, setSearch] = useState("");
+interface Props {
+  groups: TicketGroup[];
+  total: number;
+  page: number;
+  pageSize: number;
+  search: string;
+}
 
-  const filtered = useMemo(() => {
-    const q = search.replace(/\D/g, "");
-    if (!q) return groups;
-    return groups.filter((g) => g.phone.includes(q));
-  }, [groups, search]);
+export default function TicketsSearch({ groups, total, page, pageSize, search }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [inputValue, setInputValue] = useState(search);
+
+  useEffect(() => setInputValue(search), [search]);
+
+  useEffect(() => {
+    const digits = inputValue.replace(/\D/g, "");
+    if (digits === search) return;
+    const handle = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (digits) params.set("q", digits);
+      else params.delete("q");
+      params.delete("page");
+      router.replace(`${pathname}?${params.toString()}`);
+    }, 300);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputValue]);
 
   return (
     <Card>
@@ -26,15 +48,15 @@ export default function TicketsSearch({ groups }: { groups: TicketGroup[] }) {
               type="tel"
               inputMode="numeric"
               placeholder="Утасны дугаараар хайх..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
               className="pl-9"
             />
           </div>
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <TicketUnitsTable groups={filtered} key={search} />
+        <TicketUnitsTable groups={groups} total={total} page={page} pageSize={pageSize} />
       </CardContent>
     </Card>
   );

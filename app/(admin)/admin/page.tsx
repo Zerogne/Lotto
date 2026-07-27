@@ -1,14 +1,27 @@
-import { getLotteries, getTickets } from "@/lib/db";
+import { getLotteries, getTicketGroupsPage } from "@/lib/db";
 import { formatMNT } from "@/lib/mock-data";
-import { buildTicketGroups } from "@/lib/ticketGroups";
+import { toTicketGroup } from "@/lib/ticketGroups";
 import { Card, CardContent } from "@/components/ui/card";
 import TicketsSearch from "./tickets/TicketsSearch";
 import { Car, Ticket, TrendingUp, Activity } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminDashboard() {
-  const [lotteries, tickets] = await Promise.all([getLotteries(), getTickets()]);
+const PAGE_SIZE = 20;
+
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; q?: string }>;
+}) {
+  const sp = await searchParams;
+  const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
+  const search = (sp.q ?? "").trim();
+
+  const [lotteries, groupsPage] = await Promise.all([
+    getLotteries(),
+    getTicketGroupsPage({ search, page, pageSize: PAGE_SIZE }),
+  ]);
 
   const totalUnitsSold = lotteries.reduce((sum, l) => sum + l.ticketsSold, 0);
   const totalRevenue = lotteries.reduce((sum, l) => sum + l.ticketsSold * l.ticketPrice, 0);
@@ -45,7 +58,8 @@ export default async function AdminDashboard() {
     },
   ];
 
-  const groups = buildTicketGroups(lotteries, tickets);
+  const priceByLotteryId = new Map(lotteries.map((l) => [l.id, l.ticketPrice]));
+  const groups = groupsPage.rows.map((r) => toTicketGroup(r, priceByLotteryId));
 
   return (
     <div>
@@ -70,7 +84,7 @@ export default async function AdminDashboard() {
         ))}
       </div>
 
-      <TicketsSearch groups={groups} />
+      <TicketsSearch groups={groups} total={groupsPage.total} page={page} pageSize={PAGE_SIZE} search={search} />
     </div>
   );
 }

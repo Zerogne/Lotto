@@ -1,6 +1,7 @@
 import { createAdminClient } from "./supabase";
 
-const EASYSENDSMS_API_KEY = process.env.EASYSENDSMS_API_KEY ?? "";
+const CALLPRO_API_KEY = process.env.CALLPRO_API_KEY ?? "";
+const CALLPRO_SENDER = process.env.CALLPRO_SENDER ?? "";
 
 const SMS_MAX_ATTEMPTS = 3;
 const SMS_RETRY_DELAY_MS = 1000;
@@ -44,48 +45,50 @@ async function sendSMSOnce(
   phone: string,
   message: string
 ): Promise<{ ok: boolean; detail?: string; smsId?: string }> {
-  if (!EASYSENDSMS_API_KEY) {
+  if (!CALLPRO_API_KEY || !CALLPRO_SENDER) {
     console.log(`[SMS mock] To: ${phone} | ${message}`);
-    return { ok: false, detail: "EASYSENDSMS_API_KEY not set" };
+    return { ok: false, detail: "CALLPRO_API_KEY or CALLPRO_SENDER not set" };
   }
 
-  const to = phone.startsWith("+")
-    ? phone.slice(1)
-    : phone.startsWith("00")
-    ? phone.slice(2)
-    : `976${phone}`;
+  // CallPro accepts a plain 8-digit local number (their docs' own example),
+  // so strip any +976 / 00976 / 976 prefix down to the bare local number.
+  const to = phone.startsWith("+976")
+    ? phone.slice(4)
+    : phone.startsWith("00976")
+    ? phone.slice(5)
+    : phone.startsWith("976") && phone.length > 8
+    ? phone.slice(3)
+    : phone;
 
   console.log(`[SMS] Sending to ${to}: ${message}`);
 
   try {
-    const res = await fetch("https://restapi.easysendsms.app/v1/rest/sms/send", {
+    const res = await fetch("https://api-text.callpro.mn/v1/sms/send", {
       method: "POST",
       headers: {
-        apikey: EASYSENDSMS_API_KEY,
+        "x-api-key": CALLPRO_API_KEY,
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({ from: "BLCK", to, text: message, type: "0" }),
+      body: JSON.stringify({ from: CALLPRO_SENDER, to, text: message }),
     });
 
     const data = await res.json();
-    console.log(`[SMS] EasySendSMS response (${res.status}):`, JSON.stringify(data));
+    console.log(`[SMS] CallPro response (${res.status}):`, JSON.stringify(data));
 
     if (!res.ok || data.error) {
       return { ok: false, detail: JSON.stringify(data) };
     }
 
-    // Success response looks like: { status: "OK", messageIds: ["OK: <uuid>", ...] }
-    const firstId: string | undefined = data.messageIds?.[0];
-    const smsId = firstId?.startsWith("OK: ") ? firstId.slice(4) : undefined;
-    return { ok: true, smsId };
+    // Success response: { status: "queued", message_id: "..." }
+    return { ok: true, smsId: data.message_id };
   } catch (err) {
     console.error("[SMS] fetch failed:", err);
     return { ok: false, detail: String(err) };
   }
 }
 
-// Retries transient failures (network errors, non-2xx, EasySendSMS `error` field)
+// Retries transient failures (network errors, non-2xx, CallPro `error` field)
 // since messages carrying real lottery codes must not silently fail to send.
 // Every final outcome (ok or failed) is recorded to sms_logs so failed sends
 // can be listed and resent later from the admin panel.
@@ -104,7 +107,7 @@ export async function sendSMS(
     }
 
     // Missing API key is not transient — retrying won't help.
-    if (lastResult.detail === "EASYSENDSMS_API_KEY not set") {
+    if (lastResult.detail === "CALLPRO_API_KEY or CALLPRO_SENDER not set") {
       await logSmsAttempt(phone, message, lastResult, meta);
       return lastResult;
     }

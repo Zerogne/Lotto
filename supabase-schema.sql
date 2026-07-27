@@ -62,3 +62,30 @@ alter table lotteries disable row level security;
 alter table tickets   disable row level security;
 alter table winners   disable row level security;
 alter table sms_logs  disable row level security;
+
+-- Performance: the admin tickets page filters/sorts/groups by these columns on
+-- every request. Without indexes, every query is a full table scan that gets
+-- slower as more tickets are added.
+create index if not exists idx_tickets_purchase_group_id on tickets (purchase_group_id);
+create index if not exists idx_tickets_lottery_id on tickets (lottery_id);
+create index if not exists idx_tickets_phone on tickets (phone);
+create index if not exists idx_tickets_created_at on tickets (created_at desc);
+
+-- Aggregated view: one row per purchase batch instead of one row per code
+-- (each unit purchased stores 10 code rows). Lets the admin tickets page
+-- search/paginate/group in Postgres instead of pulling every code row into
+-- the app and doing it in JavaScript.
+-- coalesce() matches the app's fallback for legacy rows that predate
+-- purchase_group_id (falls back to the row's own code so they don't all
+-- collapse into a single group under a shared NULL key).
+create or replace view ticket_purchase_groups as
+select
+  coalesce(purchase_group_id, code) as purchase_group_id,
+  phone,
+  lottery_id,
+  lottery_name,
+  array_agg(code order by code) as codes,
+  count(*) as codes_count,
+  max(created_at) as last_created_at
+from tickets
+group by coalesce(purchase_group_id, code), phone, lottery_id, lottery_name;

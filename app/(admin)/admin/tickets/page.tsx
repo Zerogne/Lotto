@@ -1,24 +1,39 @@
-import { getLotteries, getTickets } from "@/lib/db";
+import { getLotteries, getTicketGroupsPage, getTicketCodeCount } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { buildTicketGroups } from "@/lib/ticketGroups";
+import { toTicketGroup } from "@/lib/ticketGroups";
 import TicketsSearch from "./TicketsSearch";
 import ManualTicketAdd from "./ManualTicketAdd";
 import BackfillButton from "./BackfillButton";
 
 export const dynamic = "force-dynamic";
 
-export default async function TicketsPage() {
-  const [lotteries, allTickets] = await Promise.all([getLotteries(), getTickets()]);
+const PAGE_SIZE = 20;
 
-  const groups = buildTicketGroups(lotteries, allTickets);
+export default async function TicketsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; q?: string }>;
+}) {
+  const sp = await searchParams;
+  const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
+  const search = (sp.q ?? "").trim();
+
+  const [lotteries, groupsPage, codeCount] = await Promise.all([
+    getLotteries(),
+    getTicketGroupsPage({ search, page, pageSize: PAGE_SIZE }),
+    getTicketCodeCount(),
+  ]);
+
+  const priceByLotteryId = new Map(lotteries.map((l) => [l.id, l.ticketPrice]));
+  const groups = groupsPage.rows.map((r) => toTicketGroup(r, priceByLotteryId));
 
   return (
     <div>
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Бүх тасалбарууд</h1>
-          <p className="text-sm text-gray-500">Нийт {allTickets.length} код</p>
+          <p className="text-sm text-gray-500">Нийт {codeCount} код</p>
         </div>
         <BackfillButton />
       </div>
@@ -57,7 +72,7 @@ export default async function TicketsPage() {
         </div>
       </div>
 
-      <TicketsSearch groups={groups} />
+      <TicketsSearch groups={groups} total={groupsPage.total} page={page} pageSize={PAGE_SIZE} search={search} />
     </div>
   );
 }

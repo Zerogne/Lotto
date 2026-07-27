@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,18 +11,20 @@ import { Trash2, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 
 export type { TicketGroup };
 
-const PAGE_SIZE = 20;
+interface Props {
+  groups: TicketGroup[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 
-export default function TicketUnitsTable({ groups }: { groups: TicketGroup[] }) {
-  const [rows, setRows] = useState(groups);
+export default function TicketUnitsTable({ groups, total, page, pageSize }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [refunding, setRefunding] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageInput, setPageInput] = useState("1");
-
-  useEffect(() => {
-    setPage(1);
-  }, [groups]);
+  const [pageInput, setPageInput] = useState(String(page));
 
   useEffect(() => {
     setPageInput(String(page));
@@ -29,6 +32,20 @@ export default function TicketUnitsTable({ groups }: { groups: TicketGroup[] }) 
 
   function keyOf(g: TicketGroup) {
     return g.purchaseGroupId;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  function goToPage(value: string | number) {
+    const n = typeof value === "number" ? value : parseInt(value, 10);
+    if (!Number.isFinite(n)) {
+      setPageInput(String(page));
+      return;
+    }
+    const clamped = Math.min(Math.max(1, n), totalPages);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(clamped));
+    router.push(`${pathname}?${params.toString()}`);
   }
 
   async function refund(group: TicketGroup) {
@@ -50,28 +67,18 @@ export default function TicketUnitsTable({ groups }: { groups: TicketGroup[] }) 
       setError(data.error ?? "Алдаа гарлаа");
       return;
     }
-    setRows((prev) => prev.filter((r) => keyOf(r) !== keyOf(group)));
+    if (groups.length === 1 && page > 1) {
+      goToPage(page - 1);
+    } else {
+      router.refresh();
+    }
   }
 
-  if (rows.length === 0) {
+  if (groups.length === 0) {
     return <p className="text-center text-sm text-gray-400 py-10">Тасалбар байхгүй байна</p>;
   }
 
-  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const pageRows = rows.slice(start, start + PAGE_SIZE);
-
-  function goToPage(value: string) {
-    const n = parseInt(value, 10);
-    if (!Number.isFinite(n)) {
-      setPageInput(String(currentPage));
-      return;
-    }
-    const clamped = Math.min(Math.max(1, n), totalPages);
-    setPage(clamped);
-    setPageInput(String(clamped));
-  }
+  const start = (page - 1) * pageSize;
 
   return (
     <div>
@@ -89,7 +96,7 @@ export default function TicketUnitsTable({ groups }: { groups: TicketGroup[] }) 
           </TableRow>
         </TableHeader>
         <TableBody>
-          {pageRows.map((group) => (
+          {groups.map((group) => (
             <TableRow key={keyOf(group)}>
               <TableCell className="text-gray-500 tabular-nums">{group.unitsCount}</TableCell>
               <TableCell className="text-gray-600 font-mono whitespace-nowrap">{group.phone}</TableCell>
@@ -132,15 +139,15 @@ export default function TicketUnitsTable({ groups }: { groups: TicketGroup[] }) 
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-4 py-3 border-t">
           <p className="text-xs text-gray-500">
-            {start + 1}-{Math.min(start + PAGE_SIZE, rows.length)} / {rows.length}
+            {start + 1}-{Math.min(start + pageSize, total)} / {total}
           </p>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               className="gap-1 text-xs"
-              disabled={currentPage === 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              onClick={() => goToPage(page - 1)}
             >
               <ChevronLeft className="h-3 w-3" />
               Өмнөх
@@ -167,8 +174,8 @@ export default function TicketUnitsTable({ groups }: { groups: TicketGroup[] }) 
               variant="outline"
               size="sm"
               className="gap-1 text-xs"
-              disabled={currentPage === totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              onClick={() => goToPage(page + 1)}
             >
               Дараах
               <ChevronRight className="h-3 w-3" />

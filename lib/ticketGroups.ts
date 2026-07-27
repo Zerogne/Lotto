@@ -1,4 +1,5 @@
 import type { Lottery, Ticket } from "./mock-data";
+import type { TicketGroupRow } from "./db";
 
 const CODES_PER_TICKET = 10; // 1 purchased unit = 10 lottery codes
 
@@ -47,4 +48,21 @@ export function buildTicketGroups(lotteries: Lottery[], tickets: Ticket[]): Tick
       return { ...g, unitsCount, totalPrice: price * unitsCount };
     })
     .sort((a, b) => b.lastPurchasedAt.localeCompare(a.lastPurchasedAt));
+}
+
+// Same shape as buildTicketGroups' output, but from an already-aggregated
+// row (see getTicketGroupsPage in lib/db.ts) instead of raw ticket rows.
+export function toTicketGroup(row: TicketGroupRow, priceByLotteryId: Map<string, number>): TicketGroup {
+  const unitsCount = Math.max(1, Math.round(row.codesCount / CODES_PER_TICKET));
+  const price = priceByLotteryId.get(row.lotteryId) ?? 0;
+  return {
+    purchaseGroupId: row.purchaseGroupId,
+    phone: row.phone,
+    lotteryId: row.lotteryId,
+    lotteryName: row.lotteryName,
+    codes: row.codes,
+    unitsCount,
+    totalPrice: price * unitsCount,
+    lastPurchasedAt: row.lastCreatedAt,
+  };
 }

@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
 
-// EasySendSMS delivery-report webhook. Registered in the EasySendSMS dashboard
-// settings; they POST here (url-encoded) whenever a message's carrier-side
-// status resolves: source, msisdn, sent_date, sms_id, response
-// (DELIVRD | EXPIRED | UNDELIV). This is the only way to catch failures that
-// happen *after* their send API already accepted the message (e.g. a carrier
-// silently dropping it) — our own send-time logging can't see those.
+// Legacy EasySendSMS delivery-report webhook. Registered in the EasySendSMS
+// dashboard settings; they POST here (url-encoded) whenever a message's
+// carrier-side status resolves: source, msisdn, sent_date, sms_id, response
+// (DELIVRD | EXPIRED | UNDELIV).
 //
-// Must stay publicly reachable (no admin auth) since EasySendSMS calls it
-// directly, and must always return 200 so their dashboard validation ping
-// (GET/POST/HEAD with no body) succeeds.
+// SMS sending now goes through CallPro (see lib/sms.ts), which has no push
+// webhook — only a GET /v1/sms/{message_id} polling endpoint — so this route
+// no longer receives real traffic. Left in place in case EasySendSMS is ever
+// re-enabled; harmless to keep since it just no-ops without matching sms_id rows.
 
 export async function GET() {
   return NextResponse.json({ ok: true });

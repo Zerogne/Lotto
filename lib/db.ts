@@ -102,6 +102,55 @@ export async function getTicketsByLottery(lotteryId: string): Promise<Ticket[]> 
   return rows.map(mapTicket);
 }
 
+export interface TicketGroupRow {
+  purchaseGroupId: string;
+  phone: string;
+  lotteryId: string;
+  lotteryName: string;
+  codes: string[];
+  codesCount: number;
+  lastCreatedAt: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapTicketGroupRow(r: any): TicketGroupRow {
+  return {
+    purchaseGroupId: r.purchase_group_id,
+    phone: r.phone,
+    lotteryId: r.lottery_id,
+    lotteryName: r.lottery_name ?? "",
+    codes: r.codes ?? [],
+    codesCount: r.codes_count ?? (r.codes?.length ?? 0),
+    lastCreatedAt: r.last_created_at ?? "",
+  };
+}
+
+// Reads from the ticket_purchase_groups view (see supabase-schema.sql) so
+// grouping/search/pagination happen in Postgres instead of fetching every
+// ticket code row into the app.
+export async function getTicketGroupsPage(opts: {
+  search?: string;
+  page: number;
+  pageSize: number;
+}): Promise<{ rows: TicketGroupRow[]; total: number }> {
+  const db = createAdminClient();
+  const { search, page, pageSize } = opts;
+  let query = db.from("ticket_purchase_groups").select("*", { count: "exact" });
+  if (search) query = query.ilike("phone", `%${search}%`);
+  query = query.order("last_created_at", { ascending: false });
+  const from = (page - 1) * pageSize;
+  const { data, error, count } = await query.range(from, from + pageSize - 1);
+  if (error) throw new Error(error.message);
+  return { rows: (data ?? []).map(mapTicketGroupRow), total: count ?? 0 };
+}
+
+export async function getTicketCodeCount(): Promise<number> {
+  const db = createAdminClient();
+  const { count, error } = await db.from("tickets").select("*", { count: "exact", head: true });
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
 export async function findTicketsByPhone(
   phone: string,
   lotteryId?: string
