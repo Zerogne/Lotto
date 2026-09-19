@@ -1,4 +1,6 @@
 export const CODES_PER_TICKET = 10;
+export const FOUR_DIGIT_CODES_PER_TICKET = 5;
+export const FOUR_DIGIT_MAX_TICKETS = 1800;
 export const DEFAULT_CODE_DIGITS = 5;
 
 export type LotteryCodeDigits = 4 | 5;
@@ -12,8 +14,25 @@ export function codePoolSize(digits: LotteryCodeDigits): number {
   return 10 ** digits - 1;
 }
 
-export function maxTicketsForCodeDigits(digits: LotteryCodeDigits): number {
-  return Math.floor(codePoolSize(digits) / CODES_PER_TICKET);
+export function codesPerTicketForNewLottery(digits: LotteryCodeDigits): number {
+  return digits === 4 ? FOUR_DIGIT_CODES_PER_TICKET : CODES_PER_TICKET;
+}
+
+export function lotteryCodesPerTicket(value: unknown): number {
+  // Existing lotteries retain the original 10-code setting after migration.
+  return value === FOUR_DIGIT_CODES_PER_TICKET ? FOUR_DIGIT_CODES_PER_TICKET : CODES_PER_TICKET;
+}
+
+export function maxTicketsForCodeDigits(
+  digits: LotteryCodeDigits,
+  codesPerTicket = codesPerTicketForNewLottery(digits)
+): number {
+  const codeCapacity = Math.floor(codePoolSize(digits) / codesPerTicket);
+  return digits === 4 ? Math.min(codeCapacity, FOUR_DIGIT_MAX_TICKETS) : codeCapacity;
+}
+
+export function unitsForCodeCount(codeCount: number, codesPerTicket: number): number {
+  return codeCount === 0 ? 0 : Math.max(1, Math.round(codeCount / codesPerTicket));
 }
 
 export function generateUniqueCodes(

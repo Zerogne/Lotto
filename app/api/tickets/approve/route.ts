@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
 import { sendSMS } from "@/lib/sms";
+import { lotteryCodesPerTicket, unitsForCodeCount } from "@/lib/lotteryCodes";
 
-const CODES_PER_SMS = 20; // split into multiple SMS messages beyond 2 units' worth of codes
+const CODES_PER_SMS = 20; // split long code lists into multiple SMS messages
 
 export async function POST(req: NextRequest) {
   const { phone, lotteryId } = await req.json();
@@ -23,26 +24,27 @@ export async function POST(req: NextRequest) {
   if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 });
   if (!tickets?.length) return NextResponse.json({ error: "No pending tickets found" }, { status: 404 });
 
-  // Mark as paid
-  const ids = tickets.map((t: { id: string }) => t.id);
-  await db.from("tickets").update({ status: "paid" }).in("id", ids);
-
-  // Now that they're paid, count the purchased units (not individual codes) toward the lottery's sold total.
-  const unitsApproved = new Set(
-    tickets.map((t: { purchase_group_id: string | null; code: string }) => t.purchase_group_id ?? t.code)
-  ).size;
-
-  const { data: lottery } = await db
+  const { data: lottery, error: lotteryErr } = await db
     .from("lotteries")
-    .select("tickets_sold")
+    .select("tickets_sold, max_tickets, codes_per_ticket")
     .eq("id", lotteryId)
     .single();
-  if (lottery) {
-    await db
-      .from("lotteries")
-      .update({ tickets_sold: lottery.tickets_sold + unitsApproved })
-      .eq("id", lotteryId);
+  if (lotteryErr || !lottery) {
+    return NextResponse.json({ error: lotteryErr?.message ?? "Lottery not found" }, { status: 500 });
   }
+  const unitsApproved = unitsForCodeCount(tickets.length, lotteryCodesPerTicket(lottery.codes_per_ticket));
+  if (lottery.tickets_sold + unitsApproved > lottery.max_tickets) {
+    return NextResponse.json({ error: "Sold out" }, { status: 400 });
+  }
+
+  const ids = tickets.map((t: { id: string }) => t.id);
+  const { error: approveErr } = await db.from("tickets").update({ status: "paid" }).in("id", ids);
+  if (approveErr) return NextResponse.json({ error: approveErr.message }, { status: 500 });
+  const { error: soldErr } = await db
+    .from("lotteries")
+    .update({ tickets_sold: lottery.tickets_sold + unitsApproved })
+    .eq("id", lotteryId);
+  if (soldErr) return NextResponse.json({ error: soldErr.message }, { status: 500 });
 
   const codes = tickets.map((t: { code: string }) => t.code);
   console.log(`[Approve] phone=${phone} codes=${codes.join(",")}`);

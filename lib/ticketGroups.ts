@@ -1,6 +1,6 @@
 import type { Lottery, Ticket } from "./mock-data";
 import type { TicketGroupRow } from "./db";
-import { CODES_PER_TICKET } from "./lotteryCodes";
+import { CODES_PER_TICKET, unitsForCodeCount } from "./lotteryCodes";
 
 export interface TicketGroup {
   purchaseGroupId: string;
@@ -17,7 +17,7 @@ export interface TicketGroup {
 // separate purchases by the same phone/lottery stay as separate rows, while
 // units bought together in one action still merge into a single row.
 export function buildTicketGroups(lotteries: Lottery[], tickets: Ticket[]): TicketGroup[] {
-  const priceByLotteryId = new Map(lotteries.map((l) => [l.id, l.ticketPrice]));
+  const lotteryById = new Map(lotteries.map((l) => [l.id, l]));
 
   const groupMap = new Map<string, TicketGroup>();
   for (const t of tickets) {
@@ -42,8 +42,9 @@ export function buildTicketGroups(lotteries: Lottery[], tickets: Ticket[]): Tick
 
   return Array.from(groupMap.values())
     .map((g) => {
-      const unitsCount = Math.max(1, Math.round(g.codes.length / CODES_PER_TICKET));
-      const price = priceByLotteryId.get(g.lotteryId) ?? 0;
+      const lottery = lotteryById.get(g.lotteryId);
+      const unitsCount = unitsForCodeCount(g.codes.length, lottery?.codesPerTicket ?? CODES_PER_TICKET);
+      const price = lottery?.ticketPrice ?? 0;
       return { ...g, unitsCount, totalPrice: price * unitsCount };
     })
     .sort((a, b) => b.lastPurchasedAt.localeCompare(a.lastPurchasedAt));
@@ -51,9 +52,10 @@ export function buildTicketGroups(lotteries: Lottery[], tickets: Ticket[]): Tick
 
 // Same shape as buildTicketGroups' output, but from an already-aggregated
 // row (see getTicketGroupsPage in lib/db.ts) instead of raw ticket rows.
-export function toTicketGroup(row: TicketGroupRow, priceByLotteryId: Map<string, number>): TicketGroup {
-  const unitsCount = Math.max(1, Math.round(row.codesCount / CODES_PER_TICKET));
-  const price = priceByLotteryId.get(row.lotteryId) ?? 0;
+export function toTicketGroup(row: TicketGroupRow, lotteryById: Map<string, Lottery>): TicketGroup {
+  const lottery = lotteryById.get(row.lotteryId);
+  const unitsCount = unitsForCodeCount(row.codesCount, lottery?.codesPerTicket ?? CODES_PER_TICKET);
+  const price = lottery?.ticketPrice ?? 0;
   return {
     purchaseGroupId: row.purchaseGroupId,
     phone: row.phone,

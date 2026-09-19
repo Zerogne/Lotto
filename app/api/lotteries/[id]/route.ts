@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
-import { DEFAULT_CODE_DIGITS, isLotteryCodeDigits, maxTicketsForCodeDigits } from "@/lib/lotteryCodes";
+import { DEFAULT_CODE_DIGITS, isLotteryCodeDigits, lotteryCodesPerTicket, maxTicketsForCodeDigits } from "@/lib/lotteryCodes";
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -22,16 +22,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
     const { data: lottery, error: lotteryError } = await db
       .from("lotteries")
-      .select("code_digits")
+      .select("code_digits, codes_per_ticket")
       .eq("id", id)
       .single();
     if (lotteryError || !lottery) {
       return NextResponse.json({ error: "Lottery not found" }, { status: 404 });
     }
     const codeDigits = isLotteryCodeDigits(lottery.code_digits) ? lottery.code_digits : DEFAULT_CODE_DIGITS;
-    if (maxTickets > maxTicketsForCodeDigits(codeDigits)) {
+    const maxCodeTickets = maxTicketsForCodeDigits(codeDigits, lotteryCodesPerTicket(lottery.codes_per_ticket));
+    if (maxTickets > maxCodeTickets) {
       return NextResponse.json(
-        { error: `Энэ кодын уртад хамгийн ихдээ ${maxTicketsForCodeDigits(codeDigits)} тасалбар үүсгэнэ` },
+        { error: `Энэ кодын уртад хамгийн ихдээ ${maxCodeTickets} тасалбар үүсгэнэ` },
         { status: 400 }
       );
     }

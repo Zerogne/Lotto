@@ -25,8 +25,8 @@ export default async function TicketsPage({
     getTicketCodeCount(),
   ]);
 
-  const priceByLotteryId = new Map(lotteries.map((l) => [l.id, l.ticketPrice]));
-  const groups = groupsPage.rows.map((r) => toTicketGroup(r, priceByLotteryId));
+  const lotteryById = new Map(lotteries.map((l) => [l.id, l]));
+  const groups = groupsPage.rows.map((r) => toTicketGroup(r, lotteryById));
 
   return (
     <div>

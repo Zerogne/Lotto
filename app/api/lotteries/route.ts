@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
-import { DEFAULT_CODE_DIGITS, isLotteryCodeDigits, maxTicketsForCodeDigits } from "@/lib/lotteryCodes";
+import { DEFAULT_CODE_DIGITS, codesPerTicketForNewLottery, isLotteryCodeDigits, maxTicketsForCodeDigits } from "@/lib/lotteryCodes";
 
 export async function GET() {
   const db = createAdminClient();
@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
       ticket_price: Number(body.ticketPrice),
       max_tickets: maxTickets,
       code_digits: codeDigits,
+      codes_per_ticket: codesPerTicketForNewLottery(codeDigits),
       tickets_sold: 0,
       end_date: body.endDate,
       draw_date: body.drawDate ?? body.endDate,

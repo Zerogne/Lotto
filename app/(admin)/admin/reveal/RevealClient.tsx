@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DEFAULT_CODE_DIGITS, isLotteryCodeDigits, lotteryCodesPerTicket, unitsForCodeCount } from "@/lib/lotteryCodes";
 
 interface Ticket {
   code: string;
@@ -18,6 +19,8 @@ interface Lottery {
   car_name: string;
   car_brand: string;
   car_model: string;
+  code_digits?: number;
+  codes_per_ticket?: number;
 }
 
 interface Props {
@@ -25,18 +28,22 @@ interface Props {
   lotteries: Lottery[];
 }
 
+function codeDigitsForLottery(lottery: Lottery | undefined): 4 | 5 {
+  const value = lottery?.code_digits;
+  return isLotteryCodeDigits(value) ? value : DEFAULT_CODE_DIGITS;
+}
+
 export default function RevealClient({ tickets, lotteries }: Props) {
   const [selectedLotteryId, setSelectedLotteryId] = useState(lotteries[0]?.id ?? "");
-  const [digits, setDigits] = useState(["", "", "", "", ""]);
-  const inputRefs = [
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-  ];
+  const [digits, setDigits] = useState<string[]>(() =>
+    Array(codeDigitsForLottery(lotteries[0])).fill("")
+  );
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  const selectedLottery = lotteries.find((l) => l.id === selectedLotteryId);
+  const codeDigits = codeDigitsForLottery(selectedLottery);
   const lotteryTickets = tickets.filter((t) => t.lottery_id === selectedLotteryId);
+  const ticketCount = unitsForCodeCount(lotteryTickets.length, lotteryCodesPerTicket(selectedLottery?.codes_per_ticket));
   const partialCode = digits.join("");
   const matches = partialCode.length === 0
     ? []
@@ -47,7 +54,7 @@ export default function RevealClient({ tickets, lotteries }: Props) {
     const next = [...digits];
     next[index] = digit;
     setDigits(next);
-    if (digit && index < 4) inputRefs[index + 1].current?.focus();
+    if (digit && index < codeDigits - 1) inputRefs.current[index + 1]?.focus();
   }
 
   function handleKeyDown(index: number, e: React.KeyboardEvent) {
@@ -55,16 +62,16 @@ export default function RevealClient({ tickets, lotteries }: Props) {
       const next = [...digits];
       next[index - 1] = "";
       setDigits(next);
-      inputRefs[index - 1].current?.focus();
+      inputRefs.current[index - 1]?.focus();
     }
   }
 
-  function reset() {
-    setDigits(["", "", "", "", ""]);
-    inputRefs[0].current?.focus();
+  function reset(nextCodeDigits = codeDigits) {
+    setDigits(Array(nextCodeDigits).fill(""));
+    inputRefs.current[0]?.focus();
   }
 
-  const isComplete = partialCode.length === 5;
+  const isComplete = partialCode.length === codeDigits;
   const winner = isComplete && matches.length === 1 ? matches[0] : null;
 
   return (
@@ -75,7 +82,11 @@ export default function RevealClient({ tickets, lotteries }: Props) {
           <Label className="text-xs uppercase tracking-wider mb-2">Сугалаа сонгох</Label>
           <Select
             value={selectedLotteryId}
-            onValueChange={(val) => { setSelectedLotteryId(val); reset(); }}
+            onValueChange={(val) => {
+              setSelectedLotteryId(val);
+              const nextLottery = lotteries.find((lottery) => lottery.id === val);
+              reset(codeDigitsForLottery(nextLottery));
+            }}
           >
             <SelectTrigger className="h-11 font-semibold">
               <SelectValue />
@@ -89,7 +100,7 @@ export default function RevealClient({ tickets, lotteries }: Props) {
             </SelectContent>
           </Select>
           <p className="text-xs text-gray-400 mt-2">
-            Энэ сугалаанд нийт <span className="font-bold text-gray-700">{lotteryTickets.length}</span> тасалбар байна
+            Энэ сугалаанд нийт <span className="font-bold text-gray-700">{ticketCount}</span> тасалбар байна
           </p>
         </CardContent>
       </Card>
@@ -102,7 +113,7 @@ export default function RevealClient({ tickets, lotteries }: Props) {
             {digits.map((d, i) => (
               <input
                 key={i}
-                ref={inputRefs[i]}
+                ref={(element) => { inputRefs.current[i] = element; }}
                 type="text"
                 inputMode="numeric"
                 maxLength={1}
@@ -115,7 +126,7 @@ export default function RevealClient({ tickets, lotteries }: Props) {
               />
             ))}
           </div>
-          <Button variant="ghost" size="sm" onClick={reset} className="text-xs text-gray-400 hover:text-gray-600 underline h-auto">
+          <Button variant="ghost" size="sm" onClick={() => reset()} className="text-xs text-gray-400 hover:text-gray-600 underline h-auto">
             Цэвэрлэх
           </Button>
         </CardContent>
@@ -129,7 +140,7 @@ export default function RevealClient({ tickets, lotteries }: Props) {
               {isComplete ? "Үр дүн" : `Таарч буй тасалбар (${matches.length})`}
             </p>
             <span className="text-xs text-gray-400 tabular-nums font-mono bg-gray-100 px-2 py-0.5 rounded">
-              {partialCode}{"_".repeat(5 - partialCode.length)}
+              {partialCode}{"_".repeat(codeDigits - partialCode.length)}
             </span>
           </div>
 

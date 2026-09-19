@@ -1,5 +1,6 @@
 import { createAdminClient } from "./supabase";
 import type { Lottery, Ticket, Winner } from "./mock-data";
+import { DEFAULT_CODE_DIGITS, isLotteryCodeDigits, lotteryCodesPerTicket } from "./lotteryCodes";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapLottery(r: any): Lottery {
@@ -12,6 +13,8 @@ function mapLottery(r: any): Lottery {
     carImages: r.car_images?.length ? r.car_images : r.car_image ? [r.car_image] : [],
     carVideo: r.car_video ?? undefined,
     ticketPrice: r.ticket_price,
+    codeDigits: isLotteryCodeDigits(r.code_digits) ? r.code_digits : DEFAULT_CODE_DIGITS,
+    codesPerTicket: lotteryCodesPerTicket(r.codes_per_ticket),
     maxTickets: r.max_tickets,
     ticketsSold: r.tickets_sold ?? 0,
     endDate: r.end_date,
@@ -92,13 +95,16 @@ async function fetchAllRows(db: ReturnType<typeof createAdminClient>, build: (qu
 
 export async function getTickets(): Promise<Ticket[]> {
   const db = createAdminClient();
-  const rows = await fetchAllRows(db, (q) => q.order("created_at", { ascending: false }));
+  const rows = await fetchAllRows(db, (q) => q
+    .order("created_at", { ascending: false })
+    .order("lottery_id", { ascending: true })
+    .order("code", { ascending: true }));
   return rows.map(mapTicket);
 }
 
 export async function getTicketsByLottery(lotteryId: string): Promise<Ticket[]> {
   const db = createAdminClient();
-  const rows = await fetchAllRows(db, (q) => q.eq("lottery_id", lotteryId));
+  const rows = await fetchAllRows(db, (q) => q.eq("lottery_id", lotteryId).order("code", { ascending: true }));
   return rows.map(mapTicket);
 }
 

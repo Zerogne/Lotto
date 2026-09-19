@@ -9,6 +9,8 @@ export interface Lottery {
   carImages: string[];
   carVideo?: string;
   ticketPrice: number;
+  codeDigits?: 4 | 5;
+  codesPerTicket?: number;
   maxTickets: number;
   ticketsSold: number;
   endDate: string;

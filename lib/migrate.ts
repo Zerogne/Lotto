@@ -9,6 +9,7 @@ create table if not exists lotteries (
   ticket_price integer not null,
   max_tickets  integer not null,
   code_digits  smallint not null default 5 check (code_digits in (4, 5)),
+  codes_per_ticket smallint not null default 10 check (codes_per_ticket in (5, 10)),
   tickets_sold integer default 0,
   end_date     date not null,
   draw_date    date,
@@ -56,7 +57,16 @@ alter table sms_logs add column if not exists sms_id text;
 
 alter table lotteries add column if not exists car_images text[] default '{}';
 alter table lotteries add column if not exists code_digits smallint not null default 5 check (code_digits in (4, 5));
+alter table lotteries add column if not exists codes_per_ticket smallint not null default 10 check (codes_per_ticket in (5, 10));
 alter table tickets add column if not exists purchase_group_id uuid;
+
+update lotteries as lottery
+set codes_per_ticket = 5
+where lottery.code_digits = 4
+  and lottery.codes_per_ticket = 10
+  and not exists (
+    select 1 from tickets as ticket where ticket.lottery_id = lottery.id
+  );
 
 alter table lotteries disable row level security;
 alter table tickets   disable row level security;

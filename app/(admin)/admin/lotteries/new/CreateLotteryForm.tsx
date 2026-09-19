@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2, Upload, Loader2, X } from "lucide-react";
-import { DEFAULT_CODE_DIGITS, maxTicketsForCodeDigits } from "@/lib/lotteryCodes";
+import { DEFAULT_CODE_DIGITS, codesPerTicketForNewLottery, maxTicketsForCodeDigits } from "@/lib/lotteryCodes";
 
 interface FormState {
   carName: string;
@@ -63,7 +63,9 @@ export default function CreateLotteryForm() {
   const [apiError, setApiError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const maxCodeTickets = maxTicketsForCodeDigits(form.codeDigits === "4" ? 4 : 5);
+  const selectedCodeDigits = form.codeDigits === "4" ? 4 : 5;
+  const codesPerTicket = codesPerTicketForNewLottery(selectedCodeDigits);
+  const maxCodeTickets = maxTicketsForCodeDigits(selectedCodeDigits);
 
   interface ImageItem {
     id: string;
@@ -266,7 +268,7 @@ export default function CreateLotteryForm() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="maxTickets">Нийт тасалбар</Label>
-              <Input id="maxTickets" type="number" inputMode="numeric" value={form.maxTickets} onChange={set("maxTickets")} placeholder="500" className={errors.maxTickets ? "border-red-400" : ""} />
+              <Input id="maxTickets" type="number" inputMode="numeric" min={1} max={maxCodeTickets} value={form.maxTickets} onChange={set("maxTickets")} placeholder="500" className={errors.maxTickets ? "border-red-400" : ""} />
               {errors.maxTickets && <p className="text-red-500 text-xs">{errors.maxTickets}</p>}
             </div>
           </div>
@@ -289,7 +291,7 @@ export default function CreateLotteryForm() {
               </SelectContent>
             </Select>
             <p className="text-xs text-gray-500">
-              Нэг тасалбар 10 кодтой. {form.codeDigits} оронтой кодоор хамгийн ихдээ {maxCodeTickets.toLocaleString()} тасалбар үүсгэнэ.
+              Нэг тасалбар {codesPerTicket} кодтой. {form.codeDigits} оронтой кодоор хамгийн ихдээ {maxCodeTickets.toLocaleString()} тасалбар үүсгэнэ.
             </p>
           </div>
 

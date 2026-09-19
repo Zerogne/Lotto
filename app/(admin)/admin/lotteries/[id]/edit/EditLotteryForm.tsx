@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2, Trash2, Upload, Loader2, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { DEFAULT_CODE_DIGITS, isLotteryCodeDigits, maxTicketsForCodeDigits } from "@/lib/lotteryCodes";
+import { DEFAULT_CODE_DIGITS, isLotteryCodeDigits, lotteryCodesPerTicket, maxTicketsForCodeDigits } from "@/lib/lotteryCodes";
 
 async function uploadToCloudinary(file: File, type: "image" | "video"): Promise<string> {
   const signRes = await fetch("/api/upload/sign", {
@@ -47,6 +47,7 @@ interface Lottery {
   ticket_price: number;
   max_tickets: number;
   code_digits?: number;
+  codes_per_ticket?: number;
   tickets_sold: number;
   end_date: string;
   draw_date: string;
@@ -68,7 +69,8 @@ interface FormState {
 export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
   const router = useRouter();
   const codeDigits = isLotteryCodeDigits(lottery.code_digits) ? lottery.code_digits : DEFAULT_CODE_DIGITS;
-  const maxCodeTickets = maxTicketsForCodeDigits(codeDigits);
+  const codesPerTicket = lotteryCodesPerTicket(lottery.codes_per_ticket);
+  const maxCodeTickets = maxTicketsForCodeDigits(codeDigits, codesPerTicket);
   const [form, setForm] = useState<FormState>({
     carName: lottery.car_name,
     ticketPrice: String(lottery.ticket_price),
@@ -297,6 +299,8 @@ export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
                   id="maxTickets"
                   type="number"
                   inputMode="numeric"
+                  min={1}
+                  max={maxCodeTickets}
                   value={form.maxTickets}
                   onChange={set("maxTickets")}
                   className={errors.maxTickets ? "border-red-400" : ""}
@@ -308,7 +312,7 @@ export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
             </div>
 
             <p className="text-xs text-gray-500">
-              Сугалааны код: {codeDigits} оронтой. Нэг тасалбар 10 кодтой тул хамгийн ихдээ {maxCodeTickets.toLocaleString()} тасалбар үүсгэнэ.
+              Сугалааны код: {codeDigits} оронтой. Нэг тасалбар {codesPerTicket} кодтой тул хамгийн ихдээ {maxCodeTickets.toLocaleString()} тасалбар үүсгэнэ.
             </p>
 
             <div className="space-y-1.5">

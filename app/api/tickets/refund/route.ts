@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
+import { lotteryCodesPerTicket, unitsForCodeCount } from "@/lib/lotteryCodes";
 
 export async function POST(req: NextRequest) {
   const { phone, lotteryId, purchaseGroupId } = await req.json();
@@ -23,19 +24,16 @@ export async function POST(req: NextRequest) {
   const { error: deleteErr } = await db.from("tickets").delete().in("id", ids);
   if (deleteErr) return NextResponse.json({ error: deleteErr.message }, { status: 500 });
 
-  const paidUnits = new Set(
-    tickets
-      .filter((t: { status?: string }) => t.status === "paid")
-      .map((t: { purchase_group_id: string | null; code: string }) => t.purchase_group_id ?? t.code)
-  ).size;
+  const paidCodeCount = tickets.filter((t: { status?: string }) => t.status === "paid").length;
 
-  if (paidUnits > 0) {
+  if (paidCodeCount > 0) {
     const { data: lottery } = await db
       .from("lotteries")
-      .select("tickets_sold")
+      .select("tickets_sold, codes_per_ticket")
       .eq("id", lotteryId)
       .single();
     if (lottery) {
+      const paidUnits = unitsForCodeCount(paidCodeCount, lotteryCodesPerTicket(lottery.codes_per_ticket));
       await db
         .from("lotteries")
         .update({ tickets_sold: Math.max(0, lottery.tickets_sold - paidUnits) })
