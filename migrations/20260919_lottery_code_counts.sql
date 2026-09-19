@@ -1,4 +1,4 @@
--- Run this on existing Supabase databases before deploying per-lottery code counts.
+-- Run this in the SQL Editor of the Supabase project used by Vercel.
 -- Lotteries that have already issued codes keep their original code count.
 alter table public.lotteries
   add column if not exists code_digits smallint not null default 5
@@ -16,3 +16,6 @@ where lottery.code_digits = 4
   and not exists (
     select 1 from public.tickets as ticket where ticket.lottery_id = lottery.id
   );
+
+-- Make the new columns available to Supabase's REST API immediately.
+notify pgrst, 'reload schema';
