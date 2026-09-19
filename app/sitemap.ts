@@ -3,6 +3,9 @@ import { getLotteries } from "@/lib/db";
 
 const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://lottomn.vercel.app";
 
+// Lottery URLs come from Supabase, so generate the sitemap at request time.
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lotteries = await getLotteries();
 
