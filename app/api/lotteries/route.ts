@@ -9,7 +9,10 @@ export async function GET() {
     .select("*")
     .order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  const response = NextResponse.json(data);
+  const projectRef = process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/^https:\/\/([^.]+)\.supabase\.co/)?.[1];
+  if (projectRef) response.headers.set("X-Supabase-Project-Ref", projectRef);
+  return response;
 }
 
 export async function POST(req: NextRequest) {
