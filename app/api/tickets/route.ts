@@ -2,6 +2,7 @@ import { NextRequest, NextResponse, after } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
 import { isAdminRequest } from "@/lib/adminAuth";
 import { sendSMS } from "@/lib/sms";
+import { CODES_PER_TICKET, DEFAULT_CODE_DIGITS, codePoolSize, generateUniqueCodes, isLotteryCodeDigits } from "@/lib/lotteryCodes";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -16,9 +17,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(data);
 }
 
-const CODES_PER_TICKET = 10; // 1 purchased unit = 10 lottery codes
 const CODES_PER_SMS = 20; // split into multiple SMS messages beyond 2 units' worth of codes
-const CODE_POOL_SIZE = 99999; // 00001-99999
 const MAX_INSERT_RETRIES = 5;
 
 type Db = ReturnType<typeof createAdminClient>;
@@ -50,19 +49,6 @@ async function fetchExistingCodes(db: Db, lotteryId: string): Promise<Set<string
   return codes;
 }
 
-function generateUniqueCodes(count: number, existing: Set<string>): string[] {
-  const used = new Set(existing);
-  const codes: string[] = [];
-  while (codes.length < count) {
-    const n = Math.floor(1 + Math.random() * CODE_POOL_SIZE); // 1..99999
-    const code = String(n).padStart(5, "0");
-    if (used.has(code)) continue;
-    used.add(code);
-    codes.push(code);
-  }
-  return codes;
-}
-
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const isPaid = body.paid === true; // admin manual add = paid immediately
@@ -79,7 +65,7 @@ export async function POST(req: NextRequest) {
 
   const { data: lottery } = await db
     .from("lotteries")
-    .select("car_name, tickets_sold, max_tickets")
+    .select("car_name, tickets_sold, max_tickets, code_digits")
     .eq("id", body.lotteryId)
     .single();
 
@@ -88,6 +74,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Sold out" }, { status: 400 });
 
   const carName = lottery.car_name;
+  const codeDigits = isLotteryCodeDigits(lottery.code_digits) ? lottery.code_digits : DEFAULT_CODE_DIGITS;
+  const poolSize = codePoolSize(codeDigits);
   const codesNeeded = quantity * CODES_PER_TICKET;
 
   let existingCodes: Set<string>;
@@ -100,7 +88,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (existingCodes.size + codesNeeded > CODE_POOL_SIZE) {
+  if (existingCodes.size + codesNeeded > poolSize) {
     return NextResponse.json(
       { error: "Энэ сугалааны кодын багтаамж дууссан" },
       { status: 400 }
@@ -130,7 +118,7 @@ export async function POST(req: NextRequest) {
     return rows;
   }
 
-  let tickets = buildTickets(generateUniqueCodes(codesNeeded, existingCodes));
+  let tickets = buildTickets(generateUniqueCodes(codesNeeded, existingCodes, codeDigits));
 
   let data: unknown[] | null = null;
   let lastErrorMessage = "";
@@ -156,13 +144,13 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
-    if (existingCodes.size + codesNeeded > CODE_POOL_SIZE) {
+    if (existingCodes.size + codesNeeded > poolSize) {
       return NextResponse.json(
         { error: "Энэ сугалааны кодын багтаамж дууссан" },
         { status: 400 }
       );
     }
-    tickets = buildTickets(generateUniqueCodes(codesNeeded, existingCodes));
+    tickets = buildTickets(generateUniqueCodes(codesNeeded, existingCodes, codeDigits));
   }
 
   if (!data) {

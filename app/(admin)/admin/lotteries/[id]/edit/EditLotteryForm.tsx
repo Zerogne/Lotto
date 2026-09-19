@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2, Trash2, Upload, Loader2, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { DEFAULT_CODE_DIGITS, isLotteryCodeDigits, maxTicketsForCodeDigits } from "@/lib/lotteryCodes";
 
 async function uploadToCloudinary(file: File, type: "image" | "video"): Promise<string> {
   const signRes = await fetch("/api/upload/sign", {
@@ -45,6 +46,7 @@ interface Lottery {
   car_video?: string;
   ticket_price: number;
   max_tickets: number;
+  code_digits?: number;
   tickets_sold: number;
   end_date: string;
   draw_date: string;
@@ -65,6 +67,8 @@ interface FormState {
 
 export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
   const router = useRouter();
+  const codeDigits = isLotteryCodeDigits(lottery.code_digits) ? lottery.code_digits : DEFAULT_CODE_DIGITS;
+  const maxCodeTickets = maxTicketsForCodeDigits(codeDigits);
   const [form, setForm] = useState<FormState>({
     carName: lottery.car_name,
     ticketPrice: String(lottery.ticket_price),
@@ -148,8 +152,10 @@ export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
     if (!form.carName.trim()) errs.carName = "Машины нэр оруулна уу";
     if (!form.ticketPrice || isNaN(Number(form.ticketPrice)) || Number(form.ticketPrice) <= 0)
       errs.ticketPrice = "Зөв үнэ оруулна уу";
-    if (!form.maxTickets || isNaN(Number(form.maxTickets)) || Number(form.maxTickets) <= 0)
+    if (!Number.isInteger(Number(form.maxTickets)) || Number(form.maxTickets) <= 0)
       errs.maxTickets = "Зөв тоо оруулна уу";
+    else if (Number(form.maxTickets) > maxCodeTickets)
+      errs.maxTickets = `Энэ кодын уртад хамгийн ихдээ ${maxCodeTickets} тасалбар үүсгэнэ`;
     if (!form.endDate) errs.endDate = "Огноо сонгоно уу";
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -300,6 +306,10 @@ export default function EditLotteryForm({ lottery }: { lottery: Lottery }) {
                 )}
               </div>
             </div>
+
+            <p className="text-xs text-gray-500">
+              Сугалааны код: {codeDigits} оронтой. Нэг тасалбар 10 кодтой тул хамгийн ихдээ {maxCodeTickets.toLocaleString()} тасалбар үүсгэнэ.
+            </p>
 
             <div className="space-y-1.5">
               <Label htmlFor="prizeValue">Шагналын үнэ цэнэ (₮)</Label>

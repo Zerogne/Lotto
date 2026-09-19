@@ -8,6 +8,7 @@ create table if not exists lotteries (
   car_images   text[] default '{}',
   ticket_price integer not null,
   max_tickets  integer not null,
+  code_digits  smallint not null default 5 check (code_digits in (4, 5)),
   tickets_sold integer default 0,
   end_date     date not null,
   draw_date    date,
@@ -46,7 +47,7 @@ create table if not exists sms_logs (
   ok                 boolean not null,
   detail             text,
   sms_id             text,
-  lottery_id         text references lotteries(id) on delete set null,
+  lottery_id         uuid references lotteries(id) on delete set null,
   purchase_group_id  uuid,
   created_at         timestamptz default now()
 );
@@ -54,6 +55,7 @@ create table if not exists sms_logs (
 alter table sms_logs add column if not exists sms_id text;
 
 alter table lotteries add column if not exists car_images text[] default '{}';
+alter table lotteries add column if not exists code_digits smallint not null default 5 check (code_digits in (4, 5));
 alter table tickets add column if not exists purchase_group_id uuid;
 
 alter table lotteries disable row level security;

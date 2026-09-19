@@ -7,12 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2, Upload, Loader2, X } from "lucide-react";
+import { DEFAULT_CODE_DIGITS, maxTicketsForCodeDigits } from "@/lib/lotteryCodes";
 
 interface FormState {
   carName: string;
   ticketPrice: string;
   maxTickets: string;
+  codeDigits: string;
   endDate: string;
   prizeValue: string;
   description: string;
@@ -22,6 +25,7 @@ const emptyForm: FormState = {
   carName: "",
   ticketPrice: "",
   maxTickets: "",
+  codeDigits: String(DEFAULT_CODE_DIGITS),
   endDate: "",
   prizeValue: "",
   description: "",
@@ -59,6 +63,7 @@ export default function CreateLotteryForm() {
   const [apiError, setApiError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const maxCodeTickets = maxTicketsForCodeDigits(form.codeDigits === "4" ? 4 : 5);
 
   interface ImageItem {
     id: string;
@@ -132,8 +137,10 @@ export default function CreateLotteryForm() {
     if (!form.carName.trim()) errs.carName = "Машины нэр оруулна уу";
     if (!form.ticketPrice || isNaN(Number(form.ticketPrice)) || Number(form.ticketPrice) <= 0)
       errs.ticketPrice = "Зөв үнэ оруулна уу";
-    if (!form.maxTickets || isNaN(Number(form.maxTickets)) || Number(form.maxTickets) <= 0)
+    if (!Number.isInteger(Number(form.maxTickets)) || Number(form.maxTickets) <= 0)
       errs.maxTickets = "Зөв тоо оруулна уу";
+    else if (Number(form.maxTickets) > maxCodeTickets)
+      errs.maxTickets = `Энэ кодын уртад хамгийн ихдээ ${maxCodeTickets} тасалбар үүсгэнэ`;
     if (!form.endDate) errs.endDate = "Огноо сонгоно уу";
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -157,6 +164,7 @@ export default function CreateLotteryForm() {
         carVideo: videoUrl || undefined,
         ticketPrice: form.ticketPrice,
         maxTickets: form.maxTickets,
+        codeDigits: Number(form.codeDigits),
         endDate: form.endDate,
         drawDate: form.endDate,
         prizeValue: form.prizeValue || "0",
@@ -261,6 +269,28 @@ export default function CreateLotteryForm() {
               <Input id="maxTickets" type="number" inputMode="numeric" value={form.maxTickets} onChange={set("maxTickets")} placeholder="500" className={errors.maxTickets ? "border-red-400" : ""} />
               {errors.maxTickets && <p className="text-red-500 text-xs">{errors.maxTickets}</p>}
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="codeDigits">Сугалааны кодын урт</Label>
+            <Select
+              value={form.codeDigits}
+              onValueChange={(value) => {
+                setForm((prev) => ({ ...prev, codeDigits: value }));
+                setErrors((prev) => ({ ...prev, maxTickets: undefined }));
+              }}
+            >
+              <SelectTrigger id="codeDigits">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5 оронтой (үндсэн)</SelectItem>
+                <SelectItem value="4">4 оронтой</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-gray-500">
+              Нэг тасалбар 10 кодтой. {form.codeDigits} оронтой кодоор хамгийн ихдээ {maxCodeTickets.toLocaleString()} тасалбар үүсгэнэ.
+            </p>
           </div>
 
           <div className="space-y-1.5">

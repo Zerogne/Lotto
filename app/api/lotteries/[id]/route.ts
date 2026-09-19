@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
+import { DEFAULT_CODE_DIGITS, isLotteryCodeDigits, maxTicketsForCodeDigits } from "@/lib/lotteryCodes";
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -14,6 +15,28 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const body = await req.json();
   const db = createAdminClient();
   const update: Record<string, unknown> = {};
+  if (body.maxTickets !== undefined) {
+    const maxTickets = Number(body.maxTickets);
+    if (!Number.isInteger(maxTickets) || maxTickets < 1) {
+      return NextResponse.json({ error: "Зөв тасалбарын тоо оруулна уу" }, { status: 400 });
+    }
+    const { data: lottery, error: lotteryError } = await db
+      .from("lotteries")
+      .select("code_digits")
+      .eq("id", id)
+      .single();
+    if (lotteryError || !lottery) {
+      return NextResponse.json({ error: "Lottery not found" }, { status: 404 });
+    }
+    const codeDigits = isLotteryCodeDigits(lottery.code_digits) ? lottery.code_digits : DEFAULT_CODE_DIGITS;
+    if (maxTickets > maxTicketsForCodeDigits(codeDigits)) {
+      return NextResponse.json(
+        { error: `Энэ кодын уртад хамгийн ихдээ ${maxTicketsForCodeDigits(codeDigits)} тасалбар үүсгэнэ` },
+        { status: 400 }
+      );
+    }
+    update.max_tickets = maxTickets;
+  }
   if (body.carName !== undefined) update.car_name = body.carName;
   if (body.carBrand !== undefined) update.car_brand = body.carBrand;
   if (body.carModel !== undefined) update.car_model = body.carModel;
@@ -24,7 +47,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   }
   if (body.carVideo !== undefined) update.car_video = body.carVideo;
   if (body.ticketPrice !== undefined) update.ticket_price = Number(body.ticketPrice);
-  if (body.maxTickets !== undefined) update.max_tickets = Number(body.maxTickets);
   if (body.endDate !== undefined) update.end_date = body.endDate;
   if (body.drawDate !== undefined) update.draw_date = body.drawDate;
   if (body.status !== undefined) update.status = body.status;

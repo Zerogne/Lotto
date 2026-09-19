@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
+import { DEFAULT_CODE_DIGITS, isLotteryCodeDigits, maxTicketsForCodeDigits } from "@/lib/lotteryCodes";
 
 export async function GET() {
   const db = createAdminClient();
@@ -13,6 +14,20 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
+  const codeDigits = body.codeDigits ?? DEFAULT_CODE_DIGITS;
+  if (!isLotteryCodeDigits(codeDigits)) {
+    return NextResponse.json({ error: "Сугалааны код 4 эсвэл 5 оронтой байх ёстой" }, { status: 400 });
+  }
+  const maxTickets = Number(body.maxTickets);
+  if (!Number.isInteger(maxTickets) || maxTickets < 1) {
+    return NextResponse.json({ error: "Зөв тасалбарын тоо оруулна уу" }, { status: 400 });
+  }
+  if (maxTickets > maxTicketsForCodeDigits(codeDigits)) {
+    return NextResponse.json(
+      { error: `Энэ кодын уртад хамгийн ихдээ ${maxTicketsForCodeDigits(codeDigits)} тасалбар үүсгэнэ` },
+      { status: 400 }
+    );
+  }
   const db = createAdminClient();
   const { data, error } = await db
     .from("lotteries")
@@ -25,7 +40,8 @@ export async function POST(req: NextRequest) {
       car_images: body.carImages ?? [],
       car_video: body.carVideo ?? null,
       ticket_price: Number(body.ticketPrice),
-      max_tickets: Number(body.maxTickets),
+      max_tickets: maxTickets,
+      code_digits: codeDigits,
       tickets_sold: 0,
       end_date: body.endDate,
       draw_date: body.drawDate ?? body.endDate,

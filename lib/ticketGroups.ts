@@ -1,7 +1,6 @@
 import type { Lottery, Ticket } from "./mock-data";
 import type { TicketGroupRow } from "./db";
-
-const CODES_PER_TICKET = 10; // 1 purchased unit = 10 lottery codes
+import { CODES_PER_TICKET } from "./lotteryCodes";
 
 export interface TicketGroup {
   purchaseGroupId: string;
