@@ -50,11 +50,23 @@ export default function RevealClient({ tickets, lotteries }: Props) {
     : lotteryTickets.filter((t) => t.code.startsWith(partialCode));
 
   function handleDigit(index: number, value: string) {
+    // Last char so typing into an already-filled box replaces its digit.
     const digit = value.replace(/\D/g, "").slice(-1);
     const next = [...digits];
     next[index] = digit;
     setDigits(next);
     if (digit && index < codeDigits - 1) inputRefs.current[index + 1]?.focus();
+  }
+
+  function handlePaste(index: number, e: React.ClipboardEvent) {
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "");
+    if (!pasted) return;
+    e.preventDefault();
+    const next = [...digits];
+    const chars = pasted.slice(0, codeDigits - index).split("");
+    chars.forEach((c, i) => { next[index + i] = c; });
+    setDigits(next);
+    inputRefs.current[Math.min(index + chars.length, codeDigits - 1)]?.focus();
   }
 
   function handleKeyDown(index: number, e: React.KeyboardEvent) {
@@ -116,9 +128,10 @@ export default function RevealClient({ tickets, lotteries }: Props) {
                 ref={(element) => { inputRefs.current[i] = element; }}
                 type="text"
                 inputMode="numeric"
-                maxLength={1}
                 value={d}
                 onChange={(e) => handleDigit(i, e.target.value)}
+                onPaste={(e) => handlePaste(i, e)}
+                onFocus={(e) => e.target.select()}
                 onKeyDown={(e) => handleKeyDown(i, e)}
                 className={`w-14 h-16 text-center text-2xl font-black border-2 rounded-xl focus:outline-none transition-colors ${
                   d ? "border-amber-500 bg-amber-50 text-amber-700" : "border-gray-200 focus:border-amber-400"

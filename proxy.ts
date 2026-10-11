@@ -10,7 +10,7 @@ function isProtectedApiRequest(pathname: string, method: string): boolean {
     (pathname === "/api/tickets/refund" && method === "POST") ||
     (pathname === "/api/tickets/backfill-purchase-groups" && method === "POST") ||
     (pathname === "/api/pending" && method === "GET") ||
-    (pathname === "/api/tickets" && method === "GET") ||
+    (pathname === "/api/tickets" && (method === "GET" || method === "POST")) ||
     (pathname === "/api/tickets/export" && method === "GET") ||
     (pathname === "/api/sms/failed" && method === "GET") ||
     (pathname === "/api/sms/resend" && method === "POST") ||

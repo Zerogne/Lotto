@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase";
-import { getTickets } from "@/lib/db";
+import { getTicketsForReveal } from "@/lib/db";
 import RevealClient from "./RevealClient";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +8,7 @@ export default async function RevealPage() {
   const db = createAdminClient();
 
   const [tickets, { data: lotteries }] = await Promise.all([
-    getTickets(),
+    getTicketsForReveal(),
     db.from("lotteries").select("id, car_name, car_brand, car_model, code_digits, codes_per_ticket").order("created_at", { ascending: false }),
   ]);
 

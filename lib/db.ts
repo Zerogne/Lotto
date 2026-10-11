@@ -102,6 +102,16 @@ export async function getTickets(): Promise<Ticket[]> {
   return rows.map(mapTicket);
 }
 
+// Ordered by the (lottery_id, code) primary key so offset paging is stable —
+// a created_at ordering can skip or repeat rows if tickets are added mid-fetch.
+export async function getTicketsForReveal(): Promise<Ticket[]> {
+  const db = createAdminClient();
+  const rows = await fetchAllRows(db, (q) => q
+    .order("lottery_id", { ascending: true })
+    .order("code", { ascending: true }));
+  return rows.map(mapTicket);
+}
+
 export async function getTicketsByLottery(lotteryId: string): Promise<Ticket[]> {
   const db = createAdminClient();
   const rows = await fetchAllRows(db, (q) => q.eq("lottery_id", lotteryId).order("code", { ascending: true }));

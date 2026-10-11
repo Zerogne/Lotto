@@ -52,8 +52,8 @@ async function fetchExistingCodes(db: Db, lotteryId: string): Promise<Set<string
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const isPaid = body.paid === true; // admin manual add = paid immediately
-  if (isPaid && !(await isAdminRequest(req))) {
+  // Tickets are only ever added by an admin, and those are paid immediately.
+  if (!(await isAdminRequest(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
           lottery_name: carName,
           purchase_date: new Date().toISOString().split("T")[0],
           purchase_group_id: purchaseGroupId,
-          status: isPaid ? "paid" : "pending",
+          status: "paid",
         });
       }
     }
@@ -166,24 +166,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Only count toward tickets_sold once actually paid (pending tickets don't reserve a slot).
   // tickets_sold tracks purchased units, not individual codes.
-  let smsQueued = false;
-  if (isPaid) {
-    await db
-      .from("lotteries")
-      .update({ tickets_sold: lottery.tickets_sold + quantity })
-      .eq("id", body.lotteryId);
+  await db
+    .from("lotteries")
+    .update({ tickets_sold: lottery.tickets_sold + quantity })
+    .eq("id", body.lotteryId);
 
-    // Send SMS after the response is flushed so ticket creation (and the admin
-    // table refresh) isn't blocked by SMS retries — failures are still tracked
-    // in sms_logs / visible on /admin/sms-failures.
-    const codes = tickets.map((t) => t.code);
-    after(() => sendChunkedSMS(body.phone, codes, body.lotteryId));
-    smsQueued = true;
-  }
+  // Send SMS after the response is flushed so ticket creation (and the admin
+  // table refresh) isn't blocked by SMS retries — failures are still tracked
+  // in sms_logs / visible on /admin/sms-failures.
+  const codes = tickets.map((t) => t.code);
+  after(() => sendChunkedSMS(body.phone, codes, body.lotteryId));
 
-  return NextResponse.json({ tickets: data, smsQueued }, { status: 201 });
+  return NextResponse.json({ tickets: data, smsQueued: true }, { status: 201 });
 }
 
 async function sendChunkedSMS(
