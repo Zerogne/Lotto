@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -20,13 +20,23 @@ export default function TicketsSearch({ groups, total, page, pageSize, search }:
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [inputValue, setInputValue] = useState(search);
+  // Last query this component pushed to the URL. When the server re-renders
+  // with that same value it's just our own echo — syncing it back into the
+  // input would wipe out anything typed while the request was in flight.
+  const pushedRef = useRef(search);
 
-  useEffect(() => setInputValue(search), [search]);
+  useEffect(() => {
+    if (search === pushedRef.current) return;
+    // URL changed from outside (back/forward, link) — reflect it in the input.
+    pushedRef.current = search;
+    setInputValue(search);
+  }, [search]);
 
   useEffect(() => {
     const digits = inputValue.replace(/\D/g, "");
-    if (digits === search) return;
+    if (digits === pushedRef.current) return;
     const handle = setTimeout(() => {
+      pushedRef.current = digits;
       const params = new URLSearchParams(searchParams.toString());
       if (digits) params.set("q", digits);
       else params.delete("q");
