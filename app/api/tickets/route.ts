@@ -53,7 +53,7 @@ async function fetchExistingCodes(db: Db, lotteryId: string): Promise<Set<string
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const isPaid = body.paid === true; // admin manual add = paid immediately
-  if (isPaid && !isAdminRequest(req)) {
+  if (isPaid && !(await isAdminRequest(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -19,19 +19,25 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const res = await fetch("/api/auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
-    setLoading(false);
-    if (res.ok) {
-      router.push("/admin");
-      router.refresh();
-    } else {
-      const data = await res.json();
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
+        // A single navigation is enough — the dashboard is force-dynamic, so a
+        // follow-up refresh() just rendered it (and hit the DB) a second time.
+        // Keep the button in its loading state until the page swaps in.
+        router.replace("/admin");
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
       setError(data.error ?? "Алдаа гарлаа");
+    } catch {
+      setError("Сүлжээний алдаа. Дахин оролдоно уу");
     }
+    setLoading(false);
   }
 
   return (

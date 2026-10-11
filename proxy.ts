@@ -20,11 +20,11 @@ function isProtectedApiRequest(pathname: string, method: string): boolean {
   );
 }
 
-export function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
-    if (!isAdminRequest(req)) {
+    if (!(await isAdminRequest(req))) {
       const url = req.nextUrl.clone();
       url.pathname = "/admin/login";
       return NextResponse.redirect(url);
@@ -32,7 +32,7 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (isProtectedApiRequest(pathname, req.method) && !isAdminRequest(req)) {
+  if (isProtectedApiRequest(pathname, req.method) && !(await isAdminRequest(req))) {
     return NextResponse.json({ error: "Нэвтрэх шаардлагатай" }, { status: 401 });
   }
 

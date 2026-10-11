@@ -26,6 +26,8 @@ export default function AdminNav() {
   const isActive = (href: string, exact: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
 
+  if (pathname.startsWith("/admin/login")) return null;
+
   return (
     <>
       {/* Desktop sidebar */}
