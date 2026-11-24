@@ -5,13 +5,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DEFAULT_CODE_DIGITS, isLotteryCodeDigits, lotteryCodesPerTicket, unitsForCodeCount } from "@/lib/lotteryCodes";
+import { DEFAULT_CODE_DIGITS, isLotteryCodeDigits } from "@/lib/lotteryCodes";
 
-interface Ticket {
+interface Winner {
   code: string;
   phone: string;
   lottery_name: string;
-  lottery_id: string;
 }
 
 interface Lottery {
@@ -20,83 +19,133 @@ interface Lottery {
   car_brand: string;
   car_model: string;
   code_digits?: number;
-  codes_per_ticket?: number;
+  tickets_sold?: number;
 }
 
 interface Props {
-  tickets: Ticket[];
   lotteries: Lottery[];
 }
+
+type Result =
+  | { type: "winner"; ticket: Winner }
+  | { type: "not-found" }
+  | { type: "error"; message: string }
+  | null;
 
 function codeDigitsForLottery(lottery: Lottery | undefined): 4 | 5 {
   const value = lottery?.code_digits;
   return isLotteryCodeDigits(value) ? value : DEFAULT_CODE_DIGITS;
 }
 
-export default function RevealClient({ tickets, lotteries }: Props) {
+export default function RevealClient({ lotteries }: Props) {
   const [selectedLotteryId, setSelectedLotteryId] = useState(lotteries[0]?.id ?? "");
   const [digits, setDigits] = useState<string[]>(() =>
     Array(codeDigitsForLottery(lotteries[0])).fill("")
   );
+  const [result, setResult] = useState<Result>(null);
+  const [checking, setChecking] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const selectedLottery = lotteries.find((l) => l.id === selectedLotteryId);
+  const selectedLottery = lotteries.find((lottery) => lottery.id === selectedLotteryId);
   const codeDigits = codeDigitsForLottery(selectedLottery);
-  const lotteryTickets = tickets.filter((t) => t.lottery_id === selectedLotteryId);
-  const ticketCount = unitsForCodeCount(lotteryTickets.length, lotteryCodesPerTicket(selectedLottery?.codes_per_ticket));
-  const partialCode = digits.join("");
-  const matches = partialCode.length === 0
-    ? []
-    : lotteryTickets.filter((t) => t.code.startsWith(partialCode));
+  const code = digits.join("");
+  const isComplete = digits.every(Boolean) && code.length === codeDigits;
+
+  function updateDigits(next: string[]) {
+    setDigits(next);
+    setResult(null);
+  }
 
   function handleDigit(index: number, value: string) {
-    // Last char so typing into an already-filled box replaces its digit.
     const digit = value.replace(/\D/g, "").slice(-1);
     const next = [...digits];
     next[index] = digit;
-    setDigits(next);
+    updateDigits(next);
     if (digit && index < codeDigits - 1) inputRefs.current[index + 1]?.focus();
   }
 
-  function handlePaste(index: number, e: React.ClipboardEvent) {
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "");
+  function handlePaste(index: number, event: React.ClipboardEvent) {
+    const pasted = event.clipboardData.getData("text").replace(/\D/g, "");
     if (!pasted) return;
-    e.preventDefault();
+    event.preventDefault();
     const next = [...digits];
     const chars = pasted.slice(0, codeDigits - index).split("");
-    chars.forEach((c, i) => { next[index + i] = c; });
-    setDigits(next);
+    chars.forEach((char, offset) => { next[index + offset] = char; });
+    updateDigits(next);
     inputRefs.current[Math.min(index + chars.length, codeDigits - 1)]?.focus();
   }
 
-  function handleKeyDown(index: number, e: React.KeyboardEvent) {
-    if (e.key === "Backspace" && !digits[index] && index > 0) {
+  function handleKeyDown(index: number, event: React.KeyboardEvent) {
+    if (event.key === "Enter" && isComplete) {
+      event.preventDefault();
+      void checkNumber();
+      return;
+    }
+    if (event.key === "Backspace" && !digits[index] && index > 0) {
       const next = [...digits];
       next[index - 1] = "";
-      setDigits(next);
+      updateDigits(next);
       inputRefs.current[index - 1]?.focus();
     }
   }
 
   function reset(nextCodeDigits = codeDigits) {
     setDigits(Array(nextCodeDigits).fill(""));
+    setResult(null);
     inputRefs.current[0]?.focus();
   }
 
-  const isComplete = partialCode.length === codeDigits;
-  const winner = isComplete && matches.length === 1 ? matches[0] : null;
+  async function checkNumber() {
+    if (!selectedLotteryId || !isComplete || checking) return;
+    setChecking(true);
+    setResult(null);
+
+    try {
+      const params = new URLSearchParams({
+        lotteryId: selectedLotteryId,
+        code,
+        status: "paid",
+      });
+      const response = await fetch(`/api/tickets?${params.toString()}`, { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) {
+        setResult({ type: "error", message: data.error ?? "Шалгах үед алдаа гарлаа" });
+        return;
+      }
+
+      const ticket = Array.isArray(data) ? data[0] : undefined;
+      setResult(ticket
+        ? {
+            type: "winner",
+            ticket: {
+              code: ticket.code,
+              phone: ticket.phone,
+              lottery_name: ticket.lottery_name ?? selectedLottery?.car_name ?? "",
+            },
+          }
+        : { type: "not-found" });
+    } catch {
+      setResult({ type: "error", message: "Сүлжээний алдаа гарлаа. Дахин оролдоно уу." });
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  if (lotteries.length === 0) {
+    return <p className="text-center text-sm text-gray-400 py-10">Сугалаа байхгүй байна</p>;
+  }
 
   return (
     <div className="space-y-6">
-      {/* Lottery selector */}
       <Card>
         <CardContent className="p-4">
           <Label className="text-xs uppercase tracking-wider mb-2">Сугалаа сонгох</Label>
           <Select
             value={selectedLotteryId}
-            onValueChange={(val) => {
-              setSelectedLotteryId(val);
-              const nextLottery = lotteries.find((lottery) => lottery.id === val);
+            disabled={checking}
+            onValueChange={(value) => {
+              setSelectedLotteryId(value);
+              const nextLottery = lotteries.find((lottery) => lottery.id === value);
               reset(codeDigitsForLottery(nextLottery));
             }}
           >
@@ -104,95 +153,86 @@ export default function RevealClient({ tickets, lotteries }: Props) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {lotteries.map((l) => (
-                <SelectItem key={l.id} value={l.id}>
-                  {l.car_brand} {l.car_model} — {l.car_name}
+              {lotteries.map((lottery) => (
+                <SelectItem key={lottery.id} value={lottery.id}>
+                  {lottery.car_brand} {lottery.car_model} — {lottery.car_name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <p className="text-xs text-gray-400 mt-2">
-            Энэ сугалаанд нийт <span className="font-bold text-gray-700">{ticketCount}</span> тасалбар байна
+            Энэ сугалаанд нийт <span className="font-bold text-gray-700">{selectedLottery?.tickets_sold ?? 0}</span> тасалбар байна
           </p>
         </CardContent>
       </Card>
 
-      {/* Digit inputs */}
       <Card>
         <CardContent className="p-6 text-center">
-          <p className="text-sm text-gray-500 mb-4 uppercase tracking-wider font-semibold">Хожсон тасалбарын дугаар</p>
-          <div className="flex justify-center gap-3 mb-4">
-            {digits.map((d, i) => (
+          <p className="text-sm text-gray-500 mb-4 uppercase tracking-wider font-semibold">
+            Санамсаргүй дугаарыг бүтнээр нь оруулна уу
+          </p>
+          <div className="flex justify-center gap-2 sm:gap-3 mb-5">
+            {digits.map((digit, index) => (
               <input
-                key={i}
-                ref={(element) => { inputRefs.current[i] = element; }}
+                key={index}
+                ref={(element) => { inputRefs.current[index] = element; }}
                 type="text"
                 inputMode="numeric"
-                value={d}
-                onChange={(e) => handleDigit(i, e.target.value)}
-                onPaste={(e) => handlePaste(i, e)}
-                onFocus={(e) => e.target.select()}
-                onKeyDown={(e) => handleKeyDown(i, e)}
-                className={`w-14 h-16 text-center text-2xl font-black border-2 rounded-xl focus:outline-none transition-colors ${
-                  d ? "border-amber-500 bg-amber-50 text-amber-700" : "border-gray-200 focus:border-amber-400"
+                disabled={checking}
+                autoFocus={index === 0}
+                aria-label={`${index + 1}-р орон`}
+                value={digit}
+                onChange={(event) => handleDigit(index, event.target.value)}
+                onPaste={(event) => handlePaste(index, event)}
+                onFocus={(event) => event.target.select()}
+                onKeyDown={(event) => handleKeyDown(index, event)}
+                className={`w-11 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-black border-2 rounded-xl focus:outline-none transition-colors ${
+                  digit ? "border-amber-500 bg-amber-50 text-amber-700" : "border-gray-200 focus:border-amber-400"
                 }`}
               />
             ))}
           </div>
-          <Button variant="ghost" size="sm" onClick={() => reset()} className="text-xs text-gray-400 hover:text-gray-600 underline h-auto">
-            Цэвэрлэх
-          </Button>
+          <div className="flex justify-center gap-2">
+            <Button variant="outline" onClick={() => reset()} disabled={checking}>
+              Цэвэрлэх
+            </Button>
+            <Button
+              onClick={() => void checkNumber()}
+              disabled={!isComplete || checking}
+              className="bg-amber-500 hover:bg-amber-600 text-white"
+            >
+              {checking ? "Шалгаж байна..." : "Дугаар шалгах"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Matches */}
-      {partialCode.length > 0 && (
-        <Card className="overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-            <p className="font-bold text-gray-900">
-              {isComplete ? "Үр дүн" : `Таарч буй тасалбар (${matches.length})`}
-            </p>
-            <span className="text-xs text-gray-400 tabular-nums font-mono bg-gray-100 px-2 py-0.5 rounded">
-              {partialCode}{"_".repeat(codeDigits - partialCode.length)}
-            </span>
+      {result?.type === "not-found" && (
+        <Card className="border-gray-200">
+          <CardContent className="p-6 text-center">
+            <p className="font-bold text-gray-900">{code} дугаар бүртгэлгүй байна</p>
+            <p className="text-sm text-gray-500 mt-1 mb-4">Дараагийн санамсаргүй дугаарыг оруулна уу.</p>
+            <Button variant="outline" onClick={() => reset()}>Дараагийн дугаар</Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {result?.type === "winner" && (
+        <Card className="overflow-hidden border-amber-300">
+          <div className="px-4 py-3 bg-amber-500 text-white text-center">
+            <p className="text-xs uppercase tracking-widest opacity-80">Хожигч</p>
+            <p className="text-2xl font-black mt-1">{result.ticket.phone}</p>
+            <p className="text-sm opacity-90 mt-1">Тасалбар: {result.ticket.code}</p>
           </div>
+          <CardContent className="p-4 text-center">
+            <p className="text-sm font-semibold text-gray-800">{result.ticket.lottery_name}</p>
+          </CardContent>
+        </Card>
+      )}
 
-          {matches.length === 0 ? (
-            <p className="text-center text-sm text-gray-400 py-8">Таарах тасалбар олдсонгүй</p>
-          ) : (
-            <div className="divide-y divide-gray-100 max-h-80 overflow-y-auto">
-              {matches.map((t, i) => (
-                <div
-                  key={i}
-                  className={`flex items-center justify-between px-4 py-3 ${
-                    isComplete ? "bg-amber-50" : ""
-                  }`}
-                >
-                  <div>
-                    <p className="font-black tabular-nums text-lg text-amber-700">{t.code}</p>
-                    <p className="text-xs text-gray-500">{t.lottery_name}</p>
-                  </div>
-                  <p className="font-bold tabular-nums text-gray-900">{t.phone}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {isComplete && matches.length > 0 && (
-            <div className="px-4 py-4 bg-amber-500 text-white text-center">
-              <p className="text-xs uppercase tracking-widest mb-1 opacity-80">
-                {matches.length === 1 ? "Хожигч" : `${matches.length} тасалбар таарлаа`}
-              </p>
-              {winner ? (
-                <>
-                  <p className="text-2xl font-black">{winner.phone}</p>
-                  <p className="text-sm opacity-80 mt-1">Тасалбар: {winner.code}</p>
-                </>
-              ) : (
-                <p className="text-lg font-bold">{matches.length} хүн энэ дугаартай</p>
-              )}
-            </div>
-          )}
+      {result?.type === "error" && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4 text-center text-sm text-red-700">{result.message}</CardContent>
         </Card>
       )}
     </div>

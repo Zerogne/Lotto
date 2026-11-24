@@ -8,10 +8,12 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const lotteryId = searchParams.get("lotteryId");
   const status = searchParams.get("status");
+  const code = searchParams.get("code");
   const db = createAdminClient();
   let query = db.from("tickets").select("*");
   if (lotteryId) query = query.eq("lottery_id", lotteryId);
   if (status) query = query.eq("status", status);
+  if (code) query = query.eq("code", code);
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
