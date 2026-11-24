@@ -41,6 +41,8 @@ create table if not exists winners (
   created_at   timestamptz default now()
 );
 
+create unique index if not exists winners_one_per_lottery on winners (lottery_id);
+
 create table if not exists sms_logs (
   id                 uuid primary key default gen_random_uuid(),
   phone              text not null,

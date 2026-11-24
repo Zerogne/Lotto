@@ -19,7 +19,6 @@ interface Lottery {
   car_brand: string;
   car_model: string;
   code_digits?: number;
-  tickets_sold?: number;
 }
 
 interface Props {
@@ -44,6 +43,9 @@ export default function RevealClient({ lotteries }: Props) {
   );
   const [result, setResult] = useState<Result>(null);
   const [checking, setChecking] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+  const [confirmationError, setConfirmationError] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const selectedLottery = lotteries.find((lottery) => lottery.id === selectedLotteryId);
@@ -54,6 +56,8 @@ export default function RevealClient({ lotteries }: Props) {
   function updateDigits(next: string[]) {
     setDigits(next);
     setResult(null);
+    setConfirmed(false);
+    setConfirmationError("");
   }
 
   function handleDigit(index: number, value: string) {
@@ -92,6 +96,8 @@ export default function RevealClient({ lotteries }: Props) {
   function reset(nextCodeDigits = codeDigits) {
     setDigits(Array(nextCodeDigits).fill(""));
     setResult(null);
+    setConfirmed(false);
+    setConfirmationError("");
     inputRefs.current[0]?.focus();
   }
 
@@ -99,6 +105,8 @@ export default function RevealClient({ lotteries }: Props) {
     if (!selectedLotteryId || !isComplete || checking) return;
     setChecking(true);
     setResult(null);
+    setConfirmed(false);
+    setConfirmationError("");
 
     try {
       const params = new URLSearchParams({
@@ -131,6 +139,31 @@ export default function RevealClient({ lotteries }: Props) {
     }
   }
 
+  async function confirmWinner() {
+    if (result?.type !== "winner" || confirming || confirmed) return;
+    if (!window.confirm(`${result.ticket.phone} дугаарыг ялагчаар батлах уу?`)) return;
+
+    setConfirming(true);
+    setConfirmationError("");
+    try {
+      const response = await fetch("/api/winners", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lotteryId: selectedLotteryId, code: result.ticket.code }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setConfirmationError(data.error ?? "Ялагч баталгаажуулах үед алдаа гарлаа");
+        return;
+      }
+      setConfirmed(true);
+    } catch {
+      setConfirmationError("Сүлжээний алдаа гарлаа. Дахин оролдоно уу.");
+    } finally {
+      setConfirming(false);
+    }
+  }
+
   if (lotteries.length === 0) {
     return <p className="text-center text-sm text-gray-400 py-10">Сугалаа байхгүй байна</p>;
   }
@@ -160,17 +193,11 @@ export default function RevealClient({ lotteries }: Props) {
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-gray-400 mt-2">
-            Энэ сугалаанд нийт <span className="font-bold text-gray-700">{selectedLottery?.tickets_sold ?? 0}</span> тасалбар байна
-          </p>
         </CardContent>
       </Card>
 
       <Card>
         <CardContent className="p-6 text-center">
-          <p className="text-sm text-gray-500 mb-4 uppercase tracking-wider font-semibold">
-            Санамсаргүй дугаарыг бүтнээр нь оруулна уу
-          </p>
           <div className="flex justify-center gap-2 sm:gap-3 mb-5">
             {digits.map((digit, index) => (
               <input
@@ -211,8 +238,7 @@ export default function RevealClient({ lotteries }: Props) {
         <Card className="border-gray-200">
           <CardContent className="p-6 text-center">
             <p className="font-bold text-gray-900">{code} дугаар бүртгэлгүй байна</p>
-            <p className="text-sm text-gray-500 mt-1 mb-4">Дараагийн санамсаргүй дугаарыг оруулна уу.</p>
-            <Button variant="outline" onClick={() => reset()}>Дараагийн дугаар</Button>
+            <Button variant="outline" onClick={() => reset()} className="mt-4">Дараагийн дугаар</Button>
           </CardContent>
         </Card>
       )}
@@ -220,12 +246,28 @@ export default function RevealClient({ lotteries }: Props) {
       {result?.type === "winner" && (
         <Card className="overflow-hidden border-amber-300">
           <div className="px-4 py-3 bg-amber-500 text-white text-center">
-            <p className="text-xs uppercase tracking-widest opacity-80">Хожигч</p>
+            <p className="text-xs uppercase tracking-widest opacity-80">Ялагч</p>
             <p className="text-2xl font-black mt-1">{result.ticket.phone}</p>
-            <p className="text-sm opacity-90 mt-1">Тасалбар: {result.ticket.code}</p>
+            <p className="text-sm opacity-90 mt-1">Сугалааны дугаар: {result.ticket.code}</p>
           </div>
           <CardContent className="p-4 text-center">
             <p className="text-sm font-semibold text-gray-800">{result.ticket.lottery_name}</p>
+            {confirmed ? (
+              <p className="mt-3 text-sm font-bold text-green-700" aria-live="polite">
+                Ялагч баталгаажлаа
+              </p>
+            ) : (
+              <Button
+                onClick={() => void confirmWinner()}
+                disabled={confirming}
+                className="mt-3 bg-amber-500 hover:bg-amber-600 text-white"
+              >
+                {confirming ? "Баталгаажуулж байна..." : "Ялагчаар батлах"}
+              </Button>
+            )}
+            {confirmationError && (
+              <p className="mt-3 text-sm text-red-600" role="alert">{confirmationError}</p>
+            )}
           </CardContent>
         </Card>
       )}
