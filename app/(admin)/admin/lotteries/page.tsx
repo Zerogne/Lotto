@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead } from "@/components/ui/table";
 import { PlusCircle, Pencil, Download } from "lucide-react";
+import { codePoolSize } from "@/lib/lotteryCodes";
 import DeleteLotteryButton from "./DeleteLotteryButton";
 import AvailableLotteryNumbers from "./AvailableLotteryNumbers";
 import DesktopLotteryRow from "./DesktopLotteryRow";
@@ -98,8 +99,7 @@ export default async function LotteriesPage() {
                   codeDigits={lottery.codeDigits ?? 5}
                   remainingCount={Math.max(
                     0,
-                    lottery.maxTickets * (lottery.codesPerTicket ?? 10) -
-                      (registeredCodeCounts[lottery.id] ?? 0)
+                    codePoolSize(lottery.codeDigits ?? 5) - (registeredCodeCounts[lottery.id] ?? 0)
                   )}
                 />
                 <Link href={`/admin/lotteries/${lottery.id}/edit`} className="flex-1">

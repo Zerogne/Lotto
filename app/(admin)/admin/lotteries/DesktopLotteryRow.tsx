@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Download, Pencil } from "lucide-react";
 import type { Lottery } from "@/lib/mock-data";
 import { formatMNT } from "@/lib/mock-data";
+import { codePoolSize } from "@/lib/lotteryCodes";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -30,8 +31,10 @@ interface Props {
 
 export default function DesktopLotteryRow({ lottery, registeredCodeCount }: Props) {
   const [open, setOpen] = useState(false);
-  const codesPerTicket = lottery.codesPerTicket ?? 10;
-  const remainingCount = Math.max(0, lottery.maxTickets * codesPerTicket - registeredCodeCount);
+  const remainingCount = Math.max(
+    0,
+    codePoolSize(lottery.codeDigits ?? 5) - registeredCodeCount
+  );
 
   return (
     <Fragment>
