@@ -10,6 +10,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params;
   const code = req.nextUrl.searchParams.get("code")?.trim() ?? "";
+  const prefix = req.nextUrl.searchParams.get("prefix")?.trim() ?? "";
   const db = createAdminClient();
   const { data: lottery, error: lotteryError } = await db
     .from("lotteries")
@@ -21,6 +22,38 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!lottery) return NextResponse.json({ error: "Сугалаа олдсонгүй" }, { status: 404 });
 
   const codeDigits = isLotteryCodeDigits(lottery.code_digits) ? lottery.code_digits : DEFAULT_CODE_DIGITS;
+
+  if (prefix) {
+    const prefixPattern = new RegExp(`^\\d{2,${codeDigits}}$`);
+    if (!prefixPattern.test(prefix)) {
+      return NextResponse.json(
+        { error: `2-${codeDigits} оронтой дугаар оруулна уу` },
+        { status: 400 }
+      );
+    }
+
+    const remainingDigits = codeDigits - prefix.length;
+    const candidateCount = 10 ** remainingDigits;
+    const rangeStart = Number(prefix) * candidateCount;
+    const candidates = Array.from({ length: candidateCount }, (_, index) => rangeStart + index)
+      .filter((value) => value > 0)
+      .map((value) => String(value).padStart(codeDigits, "0"));
+    const { data: registered, error: registeredError } = await db
+      .from("tickets")
+      .select("code")
+      .eq("lottery_id", id)
+      .like("code", `${prefix}%`)
+      .limit(candidateCount);
+
+    if (registeredError) {
+      return NextResponse.json({ error: registeredError.message }, { status: 500 });
+    }
+
+    const registeredCodes = new Set((registered ?? []).map((ticket) => ticket.code));
+    const matches = candidates.filter((candidate) => !registeredCodes.has(candidate)).slice(0, 20);
+    return NextResponse.json({ prefix, matches });
+  }
+
   if (!new RegExp(`^\\d{${codeDigits}}$`).test(code) || Number(code) === 0) {
     return NextResponse.json(
       { error: `${codeDigits} оронтой зөв дугаар оруулна уу` },

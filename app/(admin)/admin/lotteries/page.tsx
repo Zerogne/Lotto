@@ -90,7 +90,7 @@ export default async function LotteriesPage() {
                   <p className="font-medium">{lottery.endDate}</p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <AvailableLotteryNumbers
                   lotteryId={lottery.id}
                   lotteryName={lottery.carName}
@@ -151,7 +151,7 @@ export default async function LotteriesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-start gap-2">
                         <AvailableLotteryNumbers
                           lotteryId={lottery.id}
                           lotteryName={lottery.carName}
