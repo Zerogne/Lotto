@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, List, Ticket, PlusCircle, Trophy, LogOut, Database, Star } from "lucide-react";
+import { LayoutDashboard, List, Ticket, PlusCircle, Trophy, LogOut, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -57,18 +57,6 @@ export default function AdminNav() {
           >
             <PlusCircle className="h-4 w-4" />
             Шинэ сугалаа
-          </Link>
-          <Link
-            href="/admin/setup"
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-              isActive("/admin/setup", true)
-                ? "bg-amber-50 text-amber-700"
-                : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-            )}
-          >
-            <Database className="h-4 w-4" />
-            DB Тохиргоо
           </Link>
           <button
             onClick={handleLogout}

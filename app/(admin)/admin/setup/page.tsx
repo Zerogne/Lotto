@@ -1,6 +1,5 @@
-import SetupClient from "./SetupClient";
+import { redirect } from "next/navigation";
 
 export default function SetupPage() {
-  const hasToken = !!process.env.SUPABASE_MANAGEMENT_TOKEN;
-  return <SetupClient hasToken={hasToken} />;
+  redirect("/admin");
 }
