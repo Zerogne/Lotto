@@ -61,6 +61,23 @@ export async function getLotteries(): Promise<Lottery[]> {
   return (data ?? []).map(mapLottery);
 }
 
+export async function getRegisteredCodeCountsByLottery(
+  lotteryIds: string[]
+): Promise<Record<string, number>> {
+  const db = createAdminClient();
+  const entries = await Promise.all(
+    lotteryIds.map(async (lotteryId) => {
+      const { count, error } = await db
+        .from("tickets")
+        .select("*", { count: "exact", head: true })
+        .eq("lottery_id", lotteryId);
+      if (error) throw new Error(error.message);
+      return [lotteryId, count ?? 0] as const;
+    })
+  );
+  return Object.fromEntries(entries);
+}
+
 export async function getLotteryById(id: string): Promise<Lottery | undefined> {
   const db = createAdminClient();
   const { data } = await db.from("lotteries").select("*").eq("id", id).maybeSingle();

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getLotteries } from "@/lib/db";
+import { getLotteries, getRegisteredCodeCountsByLottery } from "@/lib/db";
 import { formatMNT } from "@/lib/mock-data";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { PlusCircle, Pencil, Download } from "lucide-react";
 import DeleteLotteryButton from "./DeleteLotteryButton";
+import AvailableLotteryNumbers from "./AvailableLotteryNumbers";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,9 @@ const statusVariant: Record<string, "success" | "outline" | "warning"> = {
 
 export default async function LotteriesPage() {
   const lotteries = await getLotteries();
+  const registeredCodeCounts = await getRegisteredCodeCountsByLottery(
+    lotteries.map((lottery) => lottery.id)
+  );
 
   return (
     <div>
@@ -87,6 +91,17 @@ export default async function LotteriesPage() {
                 </div>
               </div>
               <div className="flex gap-2">
+                <AvailableLotteryNumbers
+                  lotteryId={lottery.id}
+                  lotteryName={lottery.carName}
+                  codeDigits={lottery.codeDigits ?? 5}
+                  remainingCount={Math.max(
+                    0,
+                    lottery.maxTickets * (lottery.codesPerTicket ?? 10) -
+                      (registeredCodeCounts[lottery.id] ?? 0)
+                  )}
+                  totalCount={lottery.maxTickets * (lottery.codesPerTicket ?? 10)}
+                />
                 <Link href={`/admin/lotteries/${lottery.id}/edit`} className="flex-1">
                   <Button size="sm" variant="outline" className="w-full gap-1">
                     <Pencil className="h-3 w-3" />
@@ -137,6 +152,17 @@ export default async function LotteriesPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
+                        <AvailableLotteryNumbers
+                          lotteryId={lottery.id}
+                          lotteryName={lottery.carName}
+                          codeDigits={lottery.codeDigits ?? 5}
+                          remainingCount={Math.max(
+                            0,
+                            lottery.maxTickets * (lottery.codesPerTicket ?? 10) -
+                              (registeredCodeCounts[lottery.id] ?? 0)
+                          )}
+                          totalCount={lottery.maxTickets * (lottery.codesPerTicket ?? 10)}
+                        />
                         <Link href={`/admin/lotteries/${lottery.id}/edit`}>
                           <Button size="sm" variant="outline" className="gap-1 text-xs">
                             <Pencil className="h-3 w-3" />

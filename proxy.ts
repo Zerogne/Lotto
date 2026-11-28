@@ -4,6 +4,7 @@ import { isAdminRequest } from "@/lib/adminAuth";
 function isProtectedApiRequest(pathname: string, method: string): boolean {
   return (
     (pathname === "/api/lotteries" && method === "POST") ||
+    (/^\/api\/lotteries\/[^/]+\/availability$/.test(pathname) && method === "GET") ||
     (/^\/api\/lotteries\/[^/]+$/.test(pathname) && (method === "PUT" || method === "DELETE")) ||
     (/^\/api\/draw\/[^/]+$/.test(pathname) && method === "POST") ||
     (pathname === "/api/tickets/approve" && method === "POST") ||
