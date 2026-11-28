@@ -12,13 +12,37 @@ interface Props {
   remainingCount: number;
 }
 
-export default function AvailableLotteryNumbers({
-  lotteryId,
+interface ToggleProps extends Props {
+  open: boolean;
+  onToggle: () => void;
+}
+
+export function AvailableLotteryToggle({
   lotteryName,
-  codeDigits,
   remainingCount,
-}: Props) {
-  const [open, setOpen] = useState(false);
+  open,
+  onToggle,
+}: ToggleProps) {
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      className="gap-1 text-xs"
+      onClick={onToggle}
+      aria-expanded={open}
+      aria-label={`${lotteryName} сугалааны бүртгэгдээгүй дугаар шалгах`}
+    >
+      Үлдсэн {remainingCount.toLocaleString("mn-MN")}
+      <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+    </Button>
+  );
+}
+
+export function AvailableLotterySearch({
+  lotteryId,
+  codeDigits,
+}: Pick<Props, "lotteryId" | "codeDigits">) {
   const [code, setCode] = useState("");
   const [matches, setMatches] = useState<string[]>([]);
   const [matchesLoading, setMatchesLoading] = useState(false);
@@ -26,7 +50,7 @@ export default function AvailableLotteryNumbers({
   const matchesCache = useRef(new Map<string, string[]>());
 
   useEffect(() => {
-    if (!open || code.length < 2) {
+    if (code.length < 2) {
       setMatches([]);
       setMatchesLoading(false);
       setMatchesError("");
@@ -73,35 +97,10 @@ export default function AvailableLotteryNumbers({
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [code, lotteryId, open]);
-
-  function handleOpenChange(nextOpen: boolean) {
-    setOpen(nextOpen);
-    setMatches([]);
-    setMatchesError("");
-    if (!nextOpen) {
-      setCode("");
-      matchesCache.current.clear();
-    }
-  }
+  }, [code, lotteryId]);
 
   return (
-    <div className={open ? "basis-full" : ""}>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        className="gap-1 text-xs"
-        onClick={() => handleOpenChange(!open)}
-        aria-expanded={open}
-        aria-label={`${lotteryName} сугалааны бүртгэгдээгүй дугаар шалгах`}
-      >
-        Үлдсэн {remainingCount.toLocaleString("mn-MN")}
-        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
-      </Button>
-
-      {open && (
-        <div className="mt-2 min-w-[18rem] animate-in rounded-lg border border-amber-200 bg-amber-50/50 p-3 text-left duration-150 slide-in-from-top-2">
+    <div className="min-w-[18rem] animate-in rounded-lg border border-amber-200 bg-amber-50/50 p-3 text-left duration-150 slide-in-from-top-2">
           <Input
             value={code}
             onChange={(event) => {
@@ -146,6 +145,19 @@ export default function AvailableLotteryNumbers({
           {matchesError && (
             <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{matchesError}</p>
           )}
+    </div>
+  );
+}
+
+export default function AvailableLotteryNumbers(props: Props) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className={open ? "basis-full" : ""}>
+      <AvailableLotteryToggle {...props} open={open} onToggle={() => setOpen((current) => !current)} />
+      {open && (
+        <div className="mt-2">
+          <AvailableLotterySearch lotteryId={props.lotteryId} codeDigits={props.codeDigits} />
         </div>
       )}
     </div>

@@ -4,10 +4,11 @@ import { formatMNT } from "@/lib/mock-data";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Table, TableHeader, TableBody, TableRow, TableHead } from "@/components/ui/table";
 import { PlusCircle, Pencil, Download } from "lucide-react";
 import DeleteLotteryButton from "./DeleteLotteryButton";
 import AvailableLotteryNumbers from "./AvailableLotteryNumbers";
+import DesktopLotteryRow from "./DesktopLotteryRow";
 
 export const dynamic = "force-dynamic";
 
@@ -136,47 +137,11 @@ export default async function LotteriesPage() {
               </TableHeader>
               <TableBody>
                 {lotteries.map((lottery) => (
-                  <TableRow key={lottery.id}>
-                    <TableCell className="font-medium text-gray-900">{lottery.carName}</TableCell>
-                    <TableCell className="text-gray-600">{formatMNT(lottery.ticketPrice)}</TableCell>
-                    <TableCell className="text-gray-600">
-                      <span className="font-medium">{lottery.ticketsSold}</span>
-                      <span className="text-gray-400"> / {lottery.maxTickets}</span>
-                    </TableCell>
-                    <TableCell className="text-gray-500">{lottery.endDate}</TableCell>
-                    <TableCell>
-                      <Badge variant={statusVariant[lottery.status] ?? "outline"}>
-                        {statusLabel[lottery.status] ?? lottery.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap items-start gap-2">
-                        <AvailableLotteryNumbers
-                          lotteryId={lottery.id}
-                          lotteryName={lottery.carName}
-                          codeDigits={lottery.codeDigits ?? 5}
-                          remainingCount={Math.max(
-                            0,
-                            lottery.maxTickets * (lottery.codesPerTicket ?? 10) -
-                              (registeredCodeCounts[lottery.id] ?? 0)
-                          )}
-                        />
-                        <Link href={`/admin/lotteries/${lottery.id}/edit`}>
-                          <Button size="sm" variant="outline" className="gap-1 text-xs">
-                            <Pencil className="h-3 w-3" />
-                            Засах
-                          </Button>
-                        </Link>
-                        <a href={`/api/tickets/export?lotteryId=${lottery.id}`}>
-                          <Button size="sm" variant="outline" className="gap-1 text-xs">
-                            <Download className="h-3 w-3" />
-                            Excel
-                          </Button>
-                        </a>
-                        <DeleteLotteryButton lotteryId={lottery.id} lotteryName={lottery.carName} />
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                  <DesktopLotteryRow
+                    key={lottery.id}
+                    lottery={lottery}
+                    registeredCodeCount={registeredCodeCounts[lottery.id] ?? 0}
+                  />
                 ))}
               </TableBody>
             </Table>
