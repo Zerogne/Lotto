@@ -38,11 +38,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const candidates = Array.from({ length: candidateCount }, (_, index) => rangeStart + index)
       .filter((value) => value > 0)
       .map((value) => String(value).padStart(codeDigits, "0"));
+    if (candidates.length === 0) return NextResponse.json({ prefix, matches: [] });
+
     const { data: registered, error: registeredError } = await db
       .from("tickets")
       .select("code")
       .eq("lottery_id", id)
-      .like("code", `${prefix}%`)
+      .gte("code", candidates[0])
+      .lte("code", candidates[candidates.length - 1])
       .limit(candidateCount);
 
     if (registeredError) {

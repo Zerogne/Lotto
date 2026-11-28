@@ -100,7 +100,6 @@ export default async function LotteriesPage() {
                     lottery.maxTickets * (lottery.codesPerTicket ?? 10) -
                       (registeredCodeCounts[lottery.id] ?? 0)
                   )}
-                  totalCount={lottery.maxTickets * (lottery.codesPerTicket ?? 10)}
                 />
                 <Link href={`/admin/lotteries/${lottery.id}/edit`} className="flex-1">
                   <Button size="sm" variant="outline" className="w-full gap-1">
@@ -161,7 +160,6 @@ export default async function LotteriesPage() {
                             lottery.maxTickets * (lottery.codesPerTicket ?? 10) -
                               (registeredCodeCounts[lottery.id] ?? 0)
                           )}
-                          totalCount={lottery.maxTickets * (lottery.codesPerTicket ?? 10)}
                         />
                         <Link href={`/admin/lotteries/${lottery.id}/edit`}>
                           <Button size="sm" variant="outline" className="gap-1 text-xs">
