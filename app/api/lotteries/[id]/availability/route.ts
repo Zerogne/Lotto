@@ -53,7 +53,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const registeredCodes = new Set((registered ?? []).map((ticket) => ticket.code));
-    const matches = candidates.filter((candidate) => !registeredCodes.has(candidate)).slice(0, 20);
+    const matches = candidates.filter((candidate) => !registeredCodes.has(candidate)).slice(0, 10);
     return NextResponse.json({ prefix, matches });
   }
 

@@ -47,6 +47,7 @@ export function AvailableLotterySearch({
   const [matches, setMatches] = useState<string[]>([]);
   const [matchesLoading, setMatchesLoading] = useState(false);
   const [matchesError, setMatchesError] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
   const matchesCache = useRef(new Map<string, string[]>());
 
   useEffect(() => {
@@ -54,6 +55,7 @@ export function AvailableLotterySearch({
       setMatches([]);
       setMatchesLoading(false);
       setMatchesError("");
+      setHasSearched(false);
       return;
     }
 
@@ -62,6 +64,7 @@ export function AvailableLotterySearch({
       setMatches(cached);
       setMatchesLoading(false);
       setMatchesError("");
+      setHasSearched(true);
       return;
     }
 
@@ -79,14 +82,17 @@ export function AvailableLotterySearch({
           matchesCache.current.set(code, nextMatches);
           setMatches(nextMatches);
           setMatchesError("");
+          setHasSearched(true);
         } else {
           setMatches([]);
           setMatchesError(data.error ?? "Дугаар хайж чадсангүй.");
+          setHasSearched(true);
         }
       } catch (error) {
         if (!(error instanceof DOMException && error.name === "AbortError")) {
           setMatches([]);
           setMatchesError("Сүлжээний алдаа гарлаа.");
+          setHasSearched(true);
         }
       } finally {
         if (!controller.signal.aborted) setMatchesLoading(false);
@@ -106,6 +112,7 @@ export function AvailableLotterySearch({
             onChange={(event) => {
               setCode(event.target.value.replace(/\D/g, "").slice(0, codeDigits));
               setMatchesError("");
+              setHasSearched(false);
             }}
             inputMode="numeric"
             placeholder="Бүртгэгдээгүй дугаар хайх"
@@ -120,7 +127,7 @@ export function AvailableLotterySearch({
           {matchesLoading && <p className="mt-3 text-xs text-gray-500">Дугаар хайж байна...</p>}
           {!matchesLoading && code.length >= 2 && matches.length > 0 && (
             <div className="mt-3">
-              <p className="mb-2 text-xs font-medium text-gray-600">Бүртгэгдээгүй тохирох дугаарууд</p>
+              <p className="mb-2 text-xs font-medium text-gray-600">Утасны дугаарт бүртгэлгүй тохирох дугаарууд</p>
               <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5">
                 {matches.map((match) => (
                   <button
@@ -139,8 +146,8 @@ export function AvailableLotterySearch({
               </div>
             </div>
           )}
-          {!matchesLoading && !matchesError && code.length >= 2 && matches.length === 0 && (
-            <p className="mt-3 text-xs text-gray-500">Бүртгэгдээгүй тохирох дугаар олдсонгүй.</p>
+          {!matchesLoading && hasSearched && !matchesError && code.length >= 2 && matches.length === 0 && (
+            <p className="mt-3 text-xs text-gray-500">Таны хайлттай тохирох бүртгэлгүй дугаар олдсонгүй.</p>
           )}
           {matchesError && (
             <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{matchesError}</p>
